@@ -138,6 +138,89 @@ am_iomaster0_isr(void)
     am_hal_iom_queue_service(IOM_MODULE, ui32Status);
 }
 
+//*****************************************************************************
+//
+// Timer configurations.
+//
+//*****************************************************************************
+am_hal_ctimer_config_t g_sTimer0 =
+{
+    // Don't link timers.
+    0,
+
+    // Set up TimerA0.
+    (AM_HAL_CTIMER_FN_REPEAT |
+     AM_HAL_CTIMER_INT_ENABLE |
+     AM_HAL_CTIMER_LFRC_32HZ),
+
+    // No configuration required for TimerB0.
+    0,
+};
+
+
+//*****************************************************************************
+//
+// Init function for Timer A0.
+//
+//*****************************************************************************
+void
+timerA0_set_up(void)
+{
+    //
+    // Enable the LFRC.
+    //
+    am_hal_clkgen_osc_start(AM_HAL_CLKGEN_OSC_LFRC);
+
+    //
+    // Set up timer A0.
+    //
+    am_hal_ctimer_clear(0, AM_HAL_CTIMER_TIMERA);
+    am_hal_ctimer_config(0, &g_sTimer0);
+
+    //
+    // Set the timing for timerA0.
+    //
+    am_hal_ctimer_period_set(0, AM_HAL_CTIMER_TIMERA, 31, 0);
+
+    //
+    // Clear the timer Interrupt
+    //
+    am_hal_ctimer_int_clear(AM_HAL_CTIMER_INT_TIMERA0);
+
+
+	//
+    // Enable the timer Interrupt.
+    //
+    am_hal_ctimer_int_enable(AM_HAL_CTIMER_INT_TIMERA0);
+
+    //
+    // Enable the timer interrupt in the NVIC.
+    //
+    am_hal_interrupt_enable(AM_HAL_INTERRUPT_CTIMER);
+
+    //
+    // Enable the timer.
+    //
+    am_hal_ctimer_start(0, AM_HAL_CTIMER_TIMERA);
+	
+}
+
+//*****************************************************************************
+//
+// Timer Interrupt Service Routine (ISR)
+//
+//*****************************************************************************
+void
+am_ctimer_isr(void)
+{
+    //
+    // Clear TimerA0 Interrupt (write to clear).
+    //
+    am_hal_ctimer_int_clear(AM_HAL_CTIMER_INT_TIMERA0);
+	am_util_delay_ms(10);
+
+}
+
 
 //*****************************************************************************
 //
@@ -276,7 +359,7 @@ main(void)
     //
     // Initialize the printf interface for ITM/SWO output.
     //
-    itm_start();
+    //itm_start();
 
     //
     // Print the banner.
@@ -349,6 +432,29 @@ main(void)
     // Make sure the print is complete
     am_util_delay_ms(100);
 
+
+#ifdef AM_PART_APOLLO2
+    //
+    // Turn OFF Flash1
+    //
+    AM_BFW(PWRCTRL, MEMEN, FLASH1, 0);
+    while (AM_BFR(PWRCTRL, PWRONSTATUS, PD_FLAM1) != 0) {}
+
+    //
+    // Power down SRAM
+    //
+    AM_BFWe(PWRCTRL, SRAMPWDINSLEEP, SRAMSLEEPPOWERDOWN, ALLBUTLOWER8K);
+
+#endif // AM_PART_APOLLO2
+
+
+	timerA0_set_up();
+
+	//
+    // Enable interrupts to the core.
+    //
+    am_hal_interrupt_master_enable();
+
     //
     // Loop forever.
     //
@@ -358,5 +464,6 @@ main(void)
         // Go to Deep Sleep.
         //
         am_hal_sysctrl_sleep(AM_HAL_SYSCTRL_SLEEP_DEEP);
+        //am_hal_sysctrl_sleep(AM_HAL_SYSCTRL_SLEEP_NORMAL);
     }
 }
