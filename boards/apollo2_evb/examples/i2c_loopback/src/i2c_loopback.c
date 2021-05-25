@@ -64,6 +64,7 @@
 #include "am_bsp.h"
 #include "am_util.h"
 
+#define LOOP_COUNT (500/2)
 #define IOM_MODULE     0 // This will have a side benefit of testing IOM4 in offset mode
 
 // We need to shift one extra
@@ -83,6 +84,8 @@ uint8_t g_testdata[] =
 };
 
 uint8_t g_resultdata[16];
+
+uint8_t g_timer_flag = 0;
 
 
 //*****************************************************************************
@@ -118,7 +121,8 @@ am_hal_ios_config_t g_sIOSI2cConfig =
 static am_hal_iom_config_t g_sIOMI2cConfig =
 {
     .ui32InterfaceMode = AM_HAL_IOM_I2CMODE,
-    .ui32ClockFrequency = AM_HAL_IOM_1MHZ,
+    //.ui32ClockFrequency = AM_HAL_IOM_400KHZ,
+    .ui32ClockFrequency = AM_HAL_IOM_800KHZ,
     .ui8WriteThreshold = 12,
     .ui8ReadThreshold = 120,
 };
@@ -217,8 +221,9 @@ am_ctimer_isr(void)
     // Clear TimerA0 Interrupt (write to clear).
     //
     am_hal_ctimer_int_clear(AM_HAL_CTIMER_INT_TIMERA0);
-	am_util_delay_ms(10);
 
+	g_timer_flag = 1;
+	
 }
 
 
@@ -319,8 +324,8 @@ iom_set_up(void)
     am_hal_gpio_pin_config(6, AM_HAL_PIN_6_SLSDALB | AM_HAL_GPIO_PULLUP);
     AM_REG(GPIO, LOOPBACK) = IOM_MODULE;
 #else
-    am_hal_gpio_pin_config(5, AM_HAL_PIN_5_M0SCL | AM_HAL_GPIO_PULLUP);
-    am_hal_gpio_pin_config(6, AM_HAL_PIN_6_M0SDA | AM_HAL_GPIO_PULLUP);
+    am_hal_gpio_pin_config(5, AM_HAL_PIN_5_M0SCL | AM_HAL_GPIO_PULL12K);
+    am_hal_gpio_pin_config(6, AM_HAL_PIN_6_M0SDA | AM_HAL_GPIO_PULL12K);
 #endif
 
     am_hal_iom_int_enable(IOM_MODULE, 0xFF);
@@ -330,62 +335,16 @@ iom_set_up(void)
     // Turn on the IOM for this operation.
     //
     am_bsp_iom_enable(IOM_MODULE);
+
+
+	//
+    // Set up the IOM transaction queue.
+    //
+    am_hal_iom_queue_init(IOM_MODULE, g_psQueueMemory, sizeof(g_psQueueMemory));
 }
 
-//*****************************************************************************
-//
-// Main function.
-//
-//*****************************************************************************
-int
-main(void)
+void i2c_operation(void)
 {
-    //
-    // Set the clock frequency.
-    //
-    am_hal_clkgen_sysclk_select(AM_HAL_CLKGEN_SYSCLK_MAX);
-
-    //
-    // Set the default cache configuration
-    //
-    am_hal_cachectrl_enable(&am_hal_cachectrl_defaults);
-
-    //
-    // Configure the board for low power operation.
-    //
-    am_bsp_low_power_init();
-
-    //
-    //
-    // Initialize the printf interface for ITM/SWO output.
-    //
-    //itm_start();
-
-    //
-    // Print the banner.
-    //
-    am_util_stdio_terminal_clear();
-    am_util_stdio_printf("I2C Loopback Example using IOMSTR #4 and IOSLAVE");
-
-    //
-    // Allow time for all printing to finish.
-    //
-    am_util_delay_ms(10);
-
-    //
-    // Enable Interrupts.
-    //
-    am_hal_interrupt_master_enable();
-
-    //
-    // Set up the IOS
-    //
-    ios_set_up();
-
-    //
-    // Set up the IOM
-    //
-    iom_set_up();
 
     //
     // Perform a 16-byte transfer as a blocking operation.
@@ -404,11 +363,6 @@ main(void)
     }
 
     //
-    // Set up the IOM transaction queue.
-    //
-    am_hal_iom_queue_init(IOM_MODULE, g_psQueueMemory, sizeof(g_psQueueMemory));
-
-    //
     // Perform a 16-byte transfer as a blocking operation.
     //
     for ( uint32_t i = 0; i < sizeof(g_testdata); i++ )
@@ -417,7 +371,7 @@ main(void)
                              (uint32_t *)&g_testdata[i], 1, AM_HAL_IOM_OFFSET(0x80 | i));
     }
 
-    am_util_delay_ms(10);
+    //am_util_delay_ms(10);
     am_util_stdio_printf("\nNon-Blocking Transfer Complete\n");
 
     for ( uint32_t i = 0; i < 16; i++ )
@@ -430,10 +384,33 @@ main(void)
     }
 
     // Make sure the print is complete
-    am_util_delay_ms(100);
+    //am_util_delay_ms(100);
 
+}
 
-#ifdef AM_PART_APOLLO2
+//*****************************************************************************
+//
+// Main function.
+//
+//*****************************************************************************
+int
+main(void)
+{
+	//
+    // Set the clock frequency.
+    //
+    am_hal_clkgen_sysclk_select(AM_HAL_CLKGEN_SYSCLK_MAX);
+
+    //
+    // Set the default cache configuration
+    //
+    am_hal_cachectrl_enable(&am_hal_cachectrl_defaults);
+
+    //
+    // Configure the board for low power operation.
+    //
+    am_bsp_low_power_init();
+
     //
     // Turn OFF Flash1
     //
@@ -445,7 +422,22 @@ main(void)
     //
     AM_BFWe(PWRCTRL, SRAMPWDINSLEEP, SRAMSLEEPPOWERDOWN, ALLBUTLOWER8K);
 
-#endif // AM_PART_APOLLO2
+	//itm_start();
+
+    //
+    // Enable Interrupts.
+    //
+    am_hal_interrupt_master_enable();
+
+    //
+    // Set up the IOS
+    //
+    ios_set_up();
+
+    //
+    // Set up the IOM
+    //
+    iom_set_up();
 
 
 	timerA0_set_up();
@@ -460,10 +452,17 @@ main(void)
     //
     while (1)
     {
-        //
+		if(g_timer_flag)
+		{
+			g_timer_flag = 0;
+			for(uint32_t i=0; i < LOOP_COUNT;i++)
+				i2c_operation();
+		}
+
+
+		//
         // Go to Deep Sleep.
         //
         am_hal_sysctrl_sleep(AM_HAL_SYSCTRL_SLEEP_DEEP);
-        //am_hal_sysctrl_sleep(AM_HAL_SYSCTRL_SLEEP_NORMAL);
     }
 }
