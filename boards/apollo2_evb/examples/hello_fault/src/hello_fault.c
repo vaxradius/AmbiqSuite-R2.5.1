@@ -90,6 +90,67 @@ force_fault(void)
     pCauseFault = (uint32_t*)uVal;
 }
 
+
+//*****************************************************************************
+//
+// UART configuration settings.
+//
+//*****************************************************************************
+am_hal_uart_config_t g_sUartConfig =
+{
+    .ui32BaudRate = 115200,
+    .ui32DataBits = AM_HAL_UART_DATA_BITS_8,
+    .bTwoStopBits = false,
+    .ui32Parity   = AM_HAL_UART_PARITY_NONE,
+    .ui32FlowCtrl = AM_HAL_UART_FLOW_CTRL_NONE,
+};
+
+//*****************************************************************************
+//
+// Initialize the UART
+//
+//*****************************************************************************
+void
+uart_init(uint32_t ui32Module)
+{
+    //
+    // Make sure the UART RX and TX pins are enabled.
+    //
+    am_bsp_pin_enable(COM_UART_TX);
+    am_bsp_pin_enable(COM_UART_RX);
+
+    //
+    // Power on the selected UART
+    //
+    am_hal_uart_pwrctrl_enable(ui32Module);
+
+    //
+    // Start the UART interface, apply the desired configuration settings, and
+    // enable the FIFOs.
+    //
+    am_hal_uart_clock_enable(ui32Module);
+
+    //
+    // Disable the UART before configuring it.
+    //
+    am_hal_uart_disable(ui32Module);
+
+    //
+    // Configure the UART.
+    //
+    am_hal_uart_config(ui32Module, &g_sUartConfig);
+
+    //
+    // Enable the UART FIFO.
+    //
+    am_hal_uart_fifo_config(ui32Module, AM_HAL_UART_TX_FIFO_1_2 | AM_HAL_UART_RX_FIFO_1_2);
+
+    //
+    // Enable the UART.
+    //
+    am_hal_uart_enable(ui32Module);
+}
+
 //*****************************************************************************
 //
 // Main
@@ -98,7 +159,7 @@ force_fault(void)
 int
 main(void)
 {
-    //
+	//
     // Set the clock frequency.
     //
     am_hal_clkgen_sysclk_select(AM_HAL_CLKGEN_SYSCLK_MAX);
@@ -114,25 +175,14 @@ main(void)
     am_bsp_low_power_init();
 
     //
-    // Initialize the printf interface for ITM/SWO output.
+    // Initialize the printf interface for UART output.
     //
-    am_util_stdio_printf_init((am_util_stdio_print_char_t) am_bsp_itm_string_print);
+    am_util_stdio_printf_init((am_util_stdio_print_char_t)am_bsp_uart_string_print);
 
     //
-    // Initialize the SWO GPIO pin
+    // Configure and enable the UART.
     //
-    am_bsp_pin_enable(ITM_SWO);
-
-    //
-    // Enable the ITM.
-    //
-    am_hal_itm_enable();
-
-    //
-    // Enable debug printf messages using ITM on SWO pin
-    //
-    am_bsp_debug_printf_enable();
-
+    uart_init(AM_BSP_UART_PRINT_INST);
     //
     // Print the banner.
     //
