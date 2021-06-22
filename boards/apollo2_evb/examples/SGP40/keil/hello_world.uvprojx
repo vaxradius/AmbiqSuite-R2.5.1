@@ -383,14 +383,29 @@
           <GroupName>src</GroupName>
           <Files>
             <File>
-              <FileName>SGP40.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\src\SGP40.c</FilePath>
-            </File>
-            <File>
               <FileName>sensirion_hw_i2c_implementation.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\src\sensirion_hw_i2c_implementation.c</FilePath>
+            </File>
+            <File>
+              <FileName>main.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\src\main.c</FilePath>
+            </File>
+            <File>
+              <FileName>sgp40.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\src\sgp40.c</FilePath>
+            </File>
+            <File>
+              <FileName>sgp_git_version.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\src\sgp_git_version.c</FilePath>
+            </File>
+            <File>
+              <FileName>sensirion_common.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\src\sensirion_common.c</FilePath>
             </File>
           </Files>
         </Group>
