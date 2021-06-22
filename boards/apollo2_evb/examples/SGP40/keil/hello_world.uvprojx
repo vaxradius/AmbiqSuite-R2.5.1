@@ -10,6 +10,7 @@
       <TargetName>hello_world</TargetName>
       <ToolsetNumber>0x4</ToolsetNumber>
       <ToolsetName>ARM-ADS</ToolsetName>
+      <pCCUsed>5060750::V5.06 update 6 (build 750)::ARMCC</pCCUsed>
       <uAC6>0</uAC6>
       <TargetOption>
         <TargetCommonOption>
@@ -382,9 +383,14 @@
           <GroupName>src</GroupName>
           <Files>
             <File>
-              <FileName>hello_world.c</FileName>
+              <FileName>SGP40.c</FileName>
               <FileType>1</FileType>
-              <FilePath>../src/hello_world.c</FilePath>
+              <FilePath>..\src\SGP40.c</FilePath>
+            </File>
+            <File>
+              <FileName>sensirion_hw_i2c_implementation.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\src\sensirion_hw_i2c_implementation.c</FilePath>
             </File>
           </Files>
         </Group>
