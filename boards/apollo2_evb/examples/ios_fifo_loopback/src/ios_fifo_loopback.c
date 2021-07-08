@@ -90,6 +90,45 @@
 // This is part of revision 2.5.1 of the AmbiqSuite Development Package.
 //
 //*****************************************************************************
+#include <stdint.h>
+#include <stdbool.h>
+#include "am_mcu_apollo.h"
+#include "am_bsp.h"
+#include "am_util.h"
+
+//*****************************************************************************
+//
+// Start up the ITM interface.
+//
+//*****************************************************************************
+void
+itm_start(void)
+{
+    //
+    // Initialize the printf interface for ITM/SWO output.
+    //
+    am_util_stdio_printf_init((am_util_stdio_print_char_t) am_bsp_itm_string_print);
+
+    //
+    // Initialize the SWO GPIO pin
+    //
+    am_bsp_pin_enable(ITM_SWO);
+
+    //
+    // Enable the ITM.
+    //
+    am_hal_itm_enable();
+
+    //
+    // Enable debug printf messages using ITM on SWO pin
+    //
+    am_bsp_debug_printf_enable();
+    //
+    // Clear the terminal.
+    //
+    am_util_stdio_terminal_clear();
+}
+
 
 //*****************************************************************************
 //

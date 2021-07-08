@@ -256,39 +256,6 @@ am_gpio_isr(void)
     am_hal_gpio_int_service(ui64Status);
 }
 
-//*****************************************************************************
-//
-// Start up the ITM interface.
-//
-//*****************************************************************************
-void
-itm_start(void)
-{
-    //
-    // Initialize the printf interface for ITM/SWO output.
-    //
-    am_util_stdio_printf_init((am_util_stdio_print_char_t) am_bsp_itm_string_print);
-
-    //
-    // Initialize the SWO GPIO pin
-    //
-    am_bsp_pin_enable(ITM_SWO);
-
-    //
-    // Enable the ITM.
-    //
-    am_hal_itm_enable();
-
-    //
-    // Enable debug printf messages using ITM on SWO pin
-    //
-    am_bsp_debug_printf_enable();
-    //
-    // Clear the terminal.
-    //
-    am_util_stdio_terminal_clear();
-}
-
 void
 iom_slave_read(uint32_t iom, bool bSpi, uint32_t offset, uint32_t *pBuf, uint32_t size)
 {
@@ -479,6 +446,7 @@ update_progress(uint32_t ui32NumPackets)
     }
 }
 
+#if 0
 //*****************************************************************************
 //
 // Main function.
@@ -600,3 +568,4 @@ main(void)
     am_util_stdio_printf("\nTest Done - Total Received = =%d\n", g_startIdx);
     while (1);
 }
+#endif
