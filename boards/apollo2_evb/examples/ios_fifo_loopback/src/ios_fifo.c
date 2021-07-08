@@ -501,6 +501,22 @@ am_ioslave_ios_isr(void)
     }
 }
 
+void ios_init(void)
+{
+    int i;
+	  // Initialize Test Data
+    for (i = 0; i < AM_TEST_REF_BUF_SIZE; i++)
+    {
+        g_pui8TestBuf[i] = (i & 0xFF) ^ XOR_BYTE;
+    }
+
+    init_sensors();
+    //
+    // Enable the IOS. Choose the correct protocol based on USE_SPI
+    //
+    ios_set_up(USE_SPI);
+}
+
 #if 0
 //*****************************************************************************
 //

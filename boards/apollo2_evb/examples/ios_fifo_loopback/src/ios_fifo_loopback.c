@@ -129,7 +129,6 @@ itm_start(void)
     am_util_stdio_terminal_clear();
 }
 
-
 //*****************************************************************************
 //
 // Main function.
@@ -138,5 +137,45 @@ itm_start(void)
 int
 main(void)
 {
+
+    //
+    // Set the clock frequency.
+    //
+    am_hal_clkgen_sysclk_select(AM_HAL_CLKGEN_SYSCLK_MAX);
+
+    //
+    // Set the default cache configuration
+    //
+    am_hal_cachectrl_enable(&am_hal_cachectrl_defaults);
+
+    //
+    // Configure the board for low power operation.
+    //
+    am_bsp_low_power_init();
+
+    //
+    //
+    // Initialize the printf interface for ITM/SWO output.
+    //
+    itm_start();
+
+	/*init ios first*/
+	ios_init();
+
+	iom_init();
+
+	am_hal_interrupt_master_enable();
+
+
+	while(1)
+	{
+
+		//
+		// Go to Deep Sleep.
+		//
+		am_hal_sysctrl_sleep(AM_HAL_SYSCTRL_SLEEP_NORMAL);
+	}
+
+	
 
 }

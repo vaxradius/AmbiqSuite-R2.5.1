@@ -373,7 +373,6 @@ i2c_pins_enable(uint32_t ui32Module)
 static void
 iom_set_up(uint32_t iomModule, bool bSpi)
 {
-    uint32_t ioIntEnable = AM_IOSTEST_IOSTOHOST_DATAAVAIL_INTMASK;
     //
     // Enable power to IOM.
     //
@@ -420,10 +419,6 @@ iom_set_up(uint32_t iomModule, bool bSpi)
     am_hal_gpio_int_register(HANDSHAKE_PIN, hostint_handler);
     am_hal_gpio_int_enable(AM_HAL_GPIO_BIT(HANDSHAKE_PIN));
     am_hal_interrupt_enable(AM_HAL_INTERRUPT_GPIO);
-
-    // Set up IOCTL interrupts
-    // IOS ==> IOM
-    iom_slave_write(iomModule, bSpi, IOSOFFSET_WRITE_INTEN, &ioIntEnable, 1);
 }
 
 uint32_t g_ui32LastUpdate = 0;
@@ -444,6 +439,25 @@ update_progress(uint32_t ui32NumPackets)
         am_util_stdio_printf(".");
         g_ui32LastUpdate = ui32NumPackets;
     }
+}
+
+void iom_init(void)
+{
+	uint32_t iom = IOM_MODULE;
+    bool bSpi = USE_SPI;
+    uint32_t data;
+	uint32_t ioIntEnable;
+	// Set up IOM & Enable interrupt for IOS
+    iom_set_up(iom, bSpi);
+
+	// Set up IOCTL interrupts
+    // IOS ==> IOM
+    ioIntEnable = AM_IOSTEST_IOSTOHOST_DATAAVAIL_INTMASK;
+    iom_slave_write(iom, bSpi, IOSOFFSET_WRITE_INTEN, &ioIntEnable, 1);
+
+    // Send the START
+    data = AM_IOSTEST_CMD_START_DATA;
+    iom_slave_write(iom, bSpi, IOSOFFSET_WRITE_CMD, &data, 1);
 }
 
 #if 0
