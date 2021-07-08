@@ -460,6 +460,68 @@ void iom_init(void)
     iom_slave_write(iom, bSpi, IOSOFFSET_WRITE_CMD, &data, 1);
 }
 
+void iom_task(void)
+{
+	uint32_t iom = IOM_MODULE;
+    bool bSpi = USE_SPI;
+    static bool bReadIosData = false;
+    static bool bDone = false;
+    uint32_t data;
+    uint32_t maxSize = (bSpi) ? MAX_SPI_SIZE: MAX_I2C_SIZE;
+
+    if ( !bDone )
+    {
+        if ( bIosInt == true )
+        {
+            bIosInt = false;
+            // Read & Clear the IOINT status
+            iom_slave_read(iom, bSpi, IOSOFFSET_READ_INTSTAT, &data, 1);
+            // We need to clear the bit by writing to IOS
+            if ( data & AM_IOSTEST_IOSTOHOST_DATAAVAIL_INTMASK )
+            {
+                data = AM_IOSTEST_IOSTOHOST_DATAAVAIL_INTMASK;
+                iom_slave_write(iom, bSpi, IOSOFFSET_WRITE_INTCLR, &data, 1);
+                // Set bReadIosData
+                bReadIosData = true;
+            }
+            if ( bReadIosData )
+            {
+                uint32_t iosSize = 0;
+
+                bReadIosData = false;
+
+                // Read the Data Size
+                iom_slave_read(iom, bSpi, IOSOFFSET_READ_FIFOCTR, &iosSize, 2);
+                iosSize = (iosSize > maxSize)? maxSize: iosSize;
+                // Initialize Rx Buffer for later comparison
+                clear_rx_buf();
+                // Read the data
+                iom_slave_read(iom, bSpi, IOSOFFSET_READ_FIFO,
+                    (uint32_t *)g_pui8RcvBuf, iosSize);
+                // Validate Content
+                if ( !validate_rx_buf(iosSize) )
+                {
+                    am_util_stdio_printf("\nData Verification failed Accum:%lu rx=%d\n",
+                        g_startIdx, iosSize);
+                }
+                // Send the ACK/STOP
+                data = AM_IOSTEST_CMD_ACK_DATA;
+
+                update_progress(g_startIdx);
+
+                if ( g_startIdx >= MAX_SIZE )
+                {
+                    bDone = true;
+					am_util_stdio_printf("\nTest Done - Total Received = =%d\n", g_startIdx);
+                    data = AM_IOSTEST_CMD_STOP_DATA;
+                }
+                iom_slave_write(iom, bSpi, IOSOFFSET_WRITE_CMD, &data, 1);
+				
+            }
+        }
+    }	
+}
+
 #if 0
 //*****************************************************************************
 //

@@ -169,7 +169,8 @@ main(void)
 
 	while(1)
 	{
-
+		ios_task();
+		iom_task();
 		//
 		// Go to Deep Sleep.
 		//

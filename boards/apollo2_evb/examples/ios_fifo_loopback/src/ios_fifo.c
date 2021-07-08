@@ -517,6 +517,68 @@ void ios_init(void)
     ios_set_up(USE_SPI);
 }
 
+void ios_task(void)
+{
+	//while(1)
+    //{
+        uint32_t numWritten = 0;
+        uint32_t chunk1;
+
+        if (g_bSensor0Data || g_bSensor1Data)
+        {
+            if (g_bSensor0Data)
+            {
+                chunk1 = AM_TEST_REF_BUF_SIZE - g_sendIdx;
+                if (chunk1 > SENSOR0_DATA_SIZE)
+                {
+                    numWritten = am_hal_ios_fifo_write(&g_pui8TestBuf[g_sendIdx], SENSOR0_DATA_SIZE);
+                }
+                else
+                {
+                    numWritten = am_hal_ios_fifo_write(&g_pui8TestBuf[g_sendIdx], chunk1);
+                    if (numWritten == chunk1)
+                    {
+                        numWritten += am_hal_ios_fifo_write(&g_pui8TestBuf[0], SENSOR0_DATA_SIZE - chunk1);
+                    }
+                }
+
+                g_sendIdx += numWritten;
+                g_sendIdx %= AM_TEST_REF_BUF_SIZE;
+                g_bSensor0Data = false;
+            }
+            if (g_bSensor1Data)
+            {
+                chunk1 = AM_TEST_REF_BUF_SIZE - g_sendIdx;
+                if (chunk1 > SENSOR1_DATA_SIZE)
+                {
+                    numWritten = am_hal_ios_fifo_write(&g_pui8TestBuf[g_sendIdx], SENSOR1_DATA_SIZE);
+                }
+                else
+                {
+                    numWritten = am_hal_ios_fifo_write(&g_pui8TestBuf[g_sendIdx], chunk1);
+                    if (numWritten == chunk1)
+                    {
+                        numWritten += am_hal_ios_fifo_write(&g_pui8TestBuf[0], SENSOR1_DATA_SIZE - chunk1);
+                    }
+                }
+
+                g_sendIdx += numWritten;
+                g_sendIdx %= AM_TEST_REF_BUF_SIZE;
+                g_bSensor1Data = false;
+            }
+            // If we were Idle - need to inform Host if there is new data
+            if (g_iosState == AM_IOSTEST_SLAVE_STATE_NODATA)
+            {
+                if (am_hal_ios_fifo_space_used())
+                {
+                    g_iosState = AM_IOSTEST_SLAVE_STATE_DATA;
+                    inform_host();
+                }
+            }
+        }
+    //}
+}
+
 #if 0
 //*****************************************************************************
 //
