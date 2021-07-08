@@ -10,6 +10,7 @@
       <TargetName>ios_fifo</TargetName>
       <ToolsetNumber>0x4</ToolsetNumber>
       <ToolsetName>ARM-ADS</ToolsetName>
+      <pCCUsed>5060750::V5.06 update 6 (build 750)::ARMCC</pCCUsed>
       <uAC6>0</uAC6>
       <TargetOption>
         <TargetCommonOption>
@@ -395,6 +396,11 @@
               <FileName>ios_fifo_loopback.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\src\ios_fifo_loopback.c</FilePath>
+            </File>
+            <File>
+              <FileName>ios_spi_printf.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\src\ios_spi_printf.c</FilePath>
             </File>
           </Files>
         </Group>
