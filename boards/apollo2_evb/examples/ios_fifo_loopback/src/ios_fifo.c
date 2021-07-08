@@ -99,7 +99,6 @@
 #define     I2C_ADDR            0x10
 
 #define     SENSOR0_DATA_SIZE           200
-#define     SENSOR1_DATA_SIZE           500
 
 // Sensor Frequencies as factor of 12KHz
 // This test silently 'drops' the sensor data if the FIFO can not accomodate it
@@ -107,13 +106,8 @@
 // written to the FIFO made it to the host intact
 // This allows us to configure these values to unrealistically high values for
 // testing purpose
-#if 1
 #define     SENSOR0_FREQ   12 // 12 times a second
-#define     SENSOR1_FREQ    7 // 7 times a second
-#else // Just to test the throughput
-#define     SENSOR0_FREQ   1000 // 1KHz
-#define     SENSOR1_FREQ   1700 // 1.7 KHz
-#endif
+
 
 #define     XOR_BYTE            0
 #define     AM_HAL_IOS_INT_ERR  (AM_HAL_IOS_INT_FOVFL | AM_HAL_IOS_INT_FUNDFL | AM_HAL_IOS_INT_FRDERR)
@@ -135,7 +129,7 @@ typedef enum
 
 volatile AM_IOSTEST_SLAVE_STATE_E g_iosState;
 volatile uint32_t g_sendIdx = 0;
-volatile bool g_bSensor0Data, g_bSensor1Data;
+volatile bool g_bSensor0Data;
 
 //*****************************************************************************
 //
@@ -149,7 +143,7 @@ uint8_t g_pui8TestBuf[AM_TEST_REF_BUF_SIZE];
 
 
 #define AM_IOS_TX_BUFSIZE_MAX   1023
-uint8_t g_pui8TxFifoBuffer[AM_IOS_TX_BUFSIZE_MAX];
+uint8_t g_pui8TxFifoBuffer[AM_IOS_TX_BUFSIZE_MAX];//SRAM buffer for the IOS FIFO , provides the IOS HAL functions with working memory for managing outgoing IOS FIFO transactions.
 
 //*****************************************************************************
 //
@@ -241,46 +235,32 @@ timer0_handler(void)
     g_bSensor0Data = true;
 }
 
-// Emulate Sensor1 New Data
-void
-timer1_handler(void)
-{
-    // Inform main loop of sensor 1 Data availability
-    g_bSensor1Data = true;
-}
 
 void
-stop_sensors(void)
+stop_sensor(void)
 {
     //
     // Stop timer A0
     //
     am_hal_ctimer_stop(0, AM_HAL_CTIMER_TIMERA);
-    //
-    // Stop timer A1
-    //
-    am_hal_ctimer_stop(1, AM_HAL_CTIMER_TIMERA);
 }
 
 void
-start_sensors(void)
+start_sensor(void)
 {
-    stop_sensors(); // Just in case host died without sending STOP last time
+    stop_sensor(); // Just in case host died without sending STOP last time
     // Initialize Data Buffer Index
     g_sendIdx = 0;
     //
     // Start timer A0
     //
     am_hal_ctimer_start(0, AM_HAL_CTIMER_TIMERA);
-    //
-    // Start timer A1
-    //
-    am_hal_ctimer_start(1, AM_HAL_CTIMER_TIMERA);
+
     g_iosState = AM_IOSTEST_SLAVE_STATE_NODATA;
 }
 
 void
-init_sensors(void)
+init_sensor(void)
 {
     uint32_t ui32Period;
 
@@ -289,8 +269,6 @@ init_sensors(void)
     //
     am_hal_ctimer_clear(0, AM_HAL_CTIMER_TIMERA);
     am_hal_ctimer_config(0, &g_sTimer);
-    am_hal_ctimer_clear(1, AM_HAL_CTIMER_TIMERA);
-    am_hal_ctimer_config(1, &g_sTimer);
 
     //
     // Set up timerA0 for Sensor 0 Freq
@@ -298,28 +276,18 @@ init_sensors(void)
     ui32Period = 12000 / SENSOR0_FREQ ;
     am_hal_ctimer_period_set(0, AM_HAL_CTIMER_TIMERA, ui32Period,
                              (ui32Period >> 1));
-    //
-    // Set up timerA1 for Sensor 1 Freq
-    //
-    ui32Period = 12000 / SENSOR1_FREQ ;
-    am_hal_ctimer_period_set(1, AM_HAL_CTIMER_TIMERA, ui32Period,
-                             (ui32Period >> 1));
 
     //
     // Clear the timer Interrupt
     //
     am_hal_ctimer_int_clear(AM_HAL_CTIMER_INT_TIMERA0);
-    am_hal_ctimer_int_clear(AM_HAL_CTIMER_INT_TIMERA1);
 
     //
     // Enable the timer Interrupt.
     //
     am_hal_ctimer_int_register(AM_HAL_CTIMER_INT_TIMERA0,
                                timer0_handler);
-    am_hal_ctimer_int_register(AM_HAL_CTIMER_INT_TIMERA1,
-                               timer1_handler);
     am_hal_ctimer_int_enable(AM_HAL_CTIMER_INT_TIMERA0);
-    am_hal_ctimer_int_enable(AM_HAL_CTIMER_INT_TIMERA1);
 
     //
     // Enable the timer interrupt in the NVIC.
@@ -427,13 +395,13 @@ am_ioslave_acc_isr(void)
             case AM_IOSTEST_CMD_START_DATA:
                 // Host wants to start data exchange
                 // Start the Sensor Emulation
-                start_sensors();
+                start_sensor();
                 break;
 
             case AM_IOSTEST_CMD_STOP_DATA:
                 // Host no longer interested in data from us
                 // Stop the Sensor emulation
-                stop_sensors();
+                stop_sensor();
                 g_iosState = AM_IOSTEST_SLAVE_STATE_NODATA;
                 break;
 
@@ -510,7 +478,7 @@ void ios_init(void)
         g_pui8TestBuf[i] = (i & 0xFF) ^ XOR_BYTE;
     }
 
-    init_sensors();
+    init_sensor();
     //
     // Enable the IOS. Choose the correct protocol based on USE_SPI
     //
@@ -519,201 +487,41 @@ void ios_init(void)
 
 void ios_task(void)
 {
-	//while(1)
-    //{
-        uint32_t numWritten = 0;
-        uint32_t chunk1;
 
-        if (g_bSensor0Data || g_bSensor1Data)
-        {
-            if (g_bSensor0Data)
-            {
-                chunk1 = AM_TEST_REF_BUF_SIZE - g_sendIdx;
-                if (chunk1 > SENSOR0_DATA_SIZE)
-                {
-                    numWritten = am_hal_ios_fifo_write(&g_pui8TestBuf[g_sendIdx], SENSOR0_DATA_SIZE);
-                }
-                else
-                {
-                    numWritten = am_hal_ios_fifo_write(&g_pui8TestBuf[g_sendIdx], chunk1);
-                    if (numWritten == chunk1)
-                    {
-                        numWritten += am_hal_ios_fifo_write(&g_pui8TestBuf[0], SENSOR0_DATA_SIZE - chunk1);
-                    }
-                }
+    uint32_t numWritten = 0;
+    uint32_t chunk1;
 
-                g_sendIdx += numWritten;
-                g_sendIdx %= AM_TEST_REF_BUF_SIZE;
-                g_bSensor0Data = false;
-            }
-            if (g_bSensor1Data)
-            {
-                chunk1 = AM_TEST_REF_BUF_SIZE - g_sendIdx;
-                if (chunk1 > SENSOR1_DATA_SIZE)
-                {
-                    numWritten = am_hal_ios_fifo_write(&g_pui8TestBuf[g_sendIdx], SENSOR1_DATA_SIZE);
-                }
-                else
-                {
-                    numWritten = am_hal_ios_fifo_write(&g_pui8TestBuf[g_sendIdx], chunk1);
-                    if (numWritten == chunk1)
-                    {
-                        numWritten += am_hal_ios_fifo_write(&g_pui8TestBuf[0], SENSOR1_DATA_SIZE - chunk1);
-                    }
-                }
-
-                g_sendIdx += numWritten;
-                g_sendIdx %= AM_TEST_REF_BUF_SIZE;
-                g_bSensor1Data = false;
-            }
-            // If we were Idle - need to inform Host if there is new data
-            if (g_iosState == AM_IOSTEST_SLAVE_STATE_NODATA)
-            {
-                if (am_hal_ios_fifo_space_used())
-                {
-                    g_iosState = AM_IOSTEST_SLAVE_STATE_DATA;
-                    inform_host();
-                }
-            }
-        }
-    //}
-}
-
-#if 0
-//*****************************************************************************
-//
-// Main function.
-//
-//*****************************************************************************
-int
-main(void)
-{
-    int i;
-
-    //
-    // Set the clock frequency.
-    //
-    am_hal_clkgen_sysclk_select(AM_HAL_CLKGEN_SYSCLK_MAX);
-
-    //
-    // Set the default cache configuration
-    //
-    am_hal_cachectrl_enable(&am_hal_cachectrl_defaults);
-
-    //
-    // Configure the board for low power operation.
-    //
-    am_bsp_low_power_init();
-
-    //
-    //
-    // Initialize the printf interface for ITM/SWO output.
-    //
-    itm_start();
-
-#if 0 // For Debug only
-    //
-    // Set up GPIO on Pin 23, 24 & 48 for timing debug.
-    //
-    am_hal_gpio_out_bit_clear(23);
-    am_hal_gpio_pin_config(23, AM_HAL_GPIO_OUTPUT);
-    am_hal_gpio_out_bit_clear(24);
-    am_hal_gpio_pin_config(24, AM_HAL_GPIO_OUTPUT);
-    am_hal_gpio_out_bit_clear(48);
-    am_hal_gpio_pin_config(48, AM_HAL_GPIO_OUTPUT);
-    am_hal_gpio_out_bit_clear(43);
-    am_hal_gpio_pin_config(43, AM_HAL_GPIO_OUTPUT);
-#endif
-
-    // Initialize Test Data
-    for (i = 0; i < AM_TEST_REF_BUF_SIZE; i++)
+    if (g_bSensor0Data)
     {
-        g_pui8TestBuf[i] = (i & 0xFF) ^ XOR_BYTE;
-    }
-
-    init_sensors();
-    //
-    // Enable the IOS. Choose the correct protocol based on USE_SPI
-    //
-    ios_set_up(USE_SPI);
-
-    //
-    // Enable interrupts so we can receive messages from the boot host.
-    //
-    am_hal_interrupt_master_enable();
-
-    //
-    // Loop forever.
-    //
-    while(1)
-    {
-        uint32_t numWritten = 0;
-        uint32_t chunk1;
-        //
-        uint32_t ui32IntStatus = am_hal_interrupt_master_disable();
-        if (g_bSensor0Data || g_bSensor1Data)
+        chunk1 = AM_TEST_REF_BUF_SIZE - g_sendIdx;
+        if (chunk1 > SENSOR0_DATA_SIZE)
         {
-            // Enable the interrupts
-            am_hal_interrupt_master_set(ui32IntStatus);
-            if (g_bSensor0Data)
-            {
-                chunk1 = AM_TEST_REF_BUF_SIZE - g_sendIdx;
-                if (chunk1 > SENSOR0_DATA_SIZE)
-                {
-                    numWritten = am_hal_ios_fifo_write(&g_pui8TestBuf[g_sendIdx], SENSOR0_DATA_SIZE);
-                }
-                else
-                {
-                    numWritten = am_hal_ios_fifo_write(&g_pui8TestBuf[g_sendIdx], chunk1);
-                    if (numWritten == chunk1)
-                    {
-                        numWritten += am_hal_ios_fifo_write(&g_pui8TestBuf[0], SENSOR0_DATA_SIZE - chunk1);
-                    }
-                }
-
-                g_sendIdx += numWritten;
-                g_sendIdx %= AM_TEST_REF_BUF_SIZE;
-                g_bSensor0Data = false;
-            }
-            if (g_bSensor1Data)
-            {
-                chunk1 = AM_TEST_REF_BUF_SIZE - g_sendIdx;
-                if (chunk1 > SENSOR1_DATA_SIZE)
-                {
-                    numWritten = am_hal_ios_fifo_write(&g_pui8TestBuf[g_sendIdx], SENSOR1_DATA_SIZE);
-                }
-                else
-                {
-                    numWritten = am_hal_ios_fifo_write(&g_pui8TestBuf[g_sendIdx], chunk1);
-                    if (numWritten == chunk1)
-                    {
-                        numWritten += am_hal_ios_fifo_write(&g_pui8TestBuf[0], SENSOR1_DATA_SIZE - chunk1);
-                    }
-                }
-
-                g_sendIdx += numWritten;
-                g_sendIdx %= AM_TEST_REF_BUF_SIZE;
-                g_bSensor1Data = false;
-            }
-            // If we were Idle - need to inform Host if there is new data
-            if (g_iosState == AM_IOSTEST_SLAVE_STATE_NODATA)
-            {
-                if (am_hal_ios_fifo_space_used())
-                {
-                    g_iosState = AM_IOSTEST_SLAVE_STATE_DATA;
-                    inform_host();
-                }
-            }
+            numWritten = am_hal_ios_fifo_write(&g_pui8TestBuf[g_sendIdx], SENSOR0_DATA_SIZE);
         }
         else
         {
-            //
-            // Go to Deep Sleep.
-            //
-            am_hal_sysctrl_sleep(AM_HAL_SYSCTRL_SLEEP_NORMAL);
-            // Enable the interrupts
-            am_hal_interrupt_master_set(ui32IntStatus);
+            numWritten = am_hal_ios_fifo_write(&g_pui8TestBuf[g_sendIdx], chunk1);
+            if (numWritten == chunk1)
+            {
+                numWritten += am_hal_ios_fifo_write(&g_pui8TestBuf[0], SENSOR0_DATA_SIZE - chunk1);
+            }
+        }
+
+        g_sendIdx += numWritten;
+        g_sendIdx %= AM_TEST_REF_BUF_SIZE;
+        g_bSensor0Data = false;
+    }
+   
+    // If we were Idle - need to inform Host if there is new data
+    if (g_iosState == AM_IOSTEST_SLAVE_STATE_NODATA)
+    {
+        if (am_hal_ios_fifo_space_used())
+        {
+            g_iosState = AM_IOSTEST_SLAVE_STATE_DATA;
+            inform_host();
         }
     }
+        
+
 }
-#endif
+
