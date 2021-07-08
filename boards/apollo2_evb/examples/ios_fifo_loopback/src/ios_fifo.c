@@ -95,9 +95,6 @@
 #include "am_bsp.h"
 #include "am_util.h"
 
-#define     USE_SPI             1   // 0 = I2C, 1 = SPI
-#define     I2C_ADDR            0x10
-
 #define     SENSOR0_DATA_SIZE           200
 
 // Sensor Frequencies as factor of 12KHz
@@ -168,31 +165,6 @@ static am_hal_ios_config_t g_sIOSSpiConfig =
 
     // FIFO Threshold - set to half the size
     .ui32FIFOThreshold = 0x20,
-};
-
-//*****************************************************************************
-//
-// I2C Slave Configuration
-//
-//*****************************************************************************
-am_hal_ios_config_t g_sIOSI2cConfig =
-{
-    // Configure the IOS in I2C mode.
-    .ui32InterfaceSelect = AM_HAL_IOS_USE_I2C | AM_HAL_IOS_I2C_ADDRESS(I2C_ADDR << 1),
-
-    // Eliminate the "read-only" section, so an external host can use the
-    // entire "direct write" section.
-    .ui32ROBase = 0x78,
-
-    // Set the FIFO base to the maximum value, making the "direct write"
-    // section as big as possible.
-    .ui32FIFOBase = 0x80,
-
-    // We don't need any RAM space, so extend the FIFO all the way to the end
-    // of the LRAM.
-    .ui32RAMBase = 0x100,
-    // FIFO Threshold - set to half the size
-    .ui32FIFOThreshold = 0x40,
 };
 
 //*****************************************************************************
@@ -302,31 +274,18 @@ init_sensor(void)
 //
 //*****************************************************************************
 static void
-ios_set_up(bool bSpi)
+ios_set_up(void)
 {
-    if (bSpi)
-    {
-        // Configure SPI interface
-        am_hal_gpio_pin_config(AM_BSP_GPIO_IOS_SCK, AM_BSP_GPIO_CFG_IOS_SCK);
-        am_hal_gpio_pin_config(AM_BSP_GPIO_IOS_MISO, AM_BSP_GPIO_CFG_IOS_MISO);
-        am_hal_gpio_pin_config(AM_BSP_GPIO_IOS_MOSI, AM_BSP_GPIO_CFG_IOS_MOSI);
-        am_hal_gpio_pin_config(AM_BSP_GPIO_IOS_nCE, AM_BSP_GPIO_CFG_IOS_nCE);
-        //
-        // Configure the IOS interface and LRAM structure.
-        //
-        am_hal_ios_config(&g_sIOSSpiConfig);
-    }
-    else
-    {
-        // Configure I2C interface
-        am_hal_gpio_pin_config(AM_BSP_GPIO_IOS_SCL, AM_BSP_GPIO_CFG_IOS_SCL);
-        am_hal_gpio_pin_config(AM_BSP_GPIO_IOS_SDA, AM_BSP_GPIO_CFG_IOS_SDA);
-        //
-        // Configure the IOS interface and LRAM structure.
-        //
-        am_hal_ios_config(&g_sIOSI2cConfig);
-    }
 
+    // Configure SPI interface
+    am_hal_gpio_pin_config(AM_BSP_GPIO_IOS_SCK, AM_BSP_GPIO_CFG_IOS_SCK);
+    am_hal_gpio_pin_config(AM_BSP_GPIO_IOS_MISO, AM_BSP_GPIO_CFG_IOS_MISO);
+    am_hal_gpio_pin_config(AM_BSP_GPIO_IOS_MOSI, AM_BSP_GPIO_CFG_IOS_MOSI);
+    am_hal_gpio_pin_config(AM_BSP_GPIO_IOS_nCE, AM_BSP_GPIO_CFG_IOS_nCE);
+    //
+    // Configure the IOS interface and LRAM structure.
+    //
+    am_hal_ios_config(&g_sIOSSpiConfig);
 
     //
     // Clear out any IOS register-access interrupts that may be active, and
@@ -482,7 +441,7 @@ void ios_init(void)
     //
     // Enable the IOS. Choose the correct protocol based on USE_SPI
     //
-    ios_set_up(USE_SPI);
+    ios_set_up();
 }
 
 void ios_task(void)

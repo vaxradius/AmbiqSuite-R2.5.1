@@ -99,8 +99,7 @@
 #include "am_devices.h"
 
 #define     IOM_MODULE          0
-#define     USE_SPI             1   // 0 = I2C, 1 = SPI
-#define     I2C_ADDR            0x10
+
 // How much data to read from Slave before ending the test
 #define     MAX_SIZE            10000
 
@@ -184,16 +183,6 @@ static am_hal_iom_config_t g_sIOMSpiConfig =
 
 #define MAX_SPI_SIZE    1023
 
-static am_hal_iom_config_t g_sIOMI2cConfig =
-{
-    .ui32InterfaceMode = AM_HAL_IOM_I2CMODE,
-    .ui32ClockFrequency = AM_HAL_IOM_1MHZ,
-    .ui8WriteThreshold = 12,
-    .ui8ReadThreshold = 120,
-};
-
-#define MAX_I2C_SIZE   255
-
 //*****************************************************************************
 //
 // Clear Rx Buffer for comparison
@@ -257,155 +246,44 @@ am_gpio_isr(void)
 }
 
 void
-iom_slave_read(uint32_t iom, bool bSpi, uint32_t offset, uint32_t *pBuf, uint32_t size)
+iom_slave_read(uint32_t iom, uint32_t offset, uint32_t *pBuf, uint32_t size)
 {
-    if ( bSpi )
-    {
-        am_hal_iom_spi_read(iom, 0,
-                            pBuf, size, AM_HAL_IOM_OFFSET(offset));
-    }
-    else
-    {
-        am_hal_iom_i2c_read(iom, I2C_ADDR,
-                            pBuf, size, AM_HAL_IOM_OFFSET(offset));
-    }
+    am_hal_iom_spi_read(iom, 0,
+                        pBuf, size, AM_HAL_IOM_OFFSET(offset));
 }
 
 void
-iom_slave_write(uint32_t iom, bool bSpi, uint32_t offset, uint32_t *pBuf, uint32_t size)
+iom_slave_write(uint32_t iom, uint32_t offset, uint32_t *pBuf, uint32_t size)
 {
-    if ( bSpi )
-    {
-        am_hal_iom_spi_write(iom, 0,
-                             pBuf, size, AM_HAL_IOM_OFFSET(offset));
-    }
-    else
-    {
-        am_hal_iom_i2c_write(iom, I2C_ADDR,
-                             pBuf, size, AM_HAL_IOM_OFFSET(offset) );
-    }
-}
-
-//*****************************************************************************
-//
-// Internal Helper functions
-//
-//*****************************************************************************
-void
-i2c_pins_enable(uint32_t ui32Module)
-{
-    switch(ui32Module)
-    {
-        case 0:
-            //
-            // Set pins high to prevent bus dips.
-            //
-            am_hal_gpio_out_bit_set(AM_BSP_GPIO_IOM0_SCL);
-            am_hal_gpio_out_bit_set(AM_BSP_GPIO_IOM0_SDA);
-
-            am_hal_gpio_pin_config(AM_BSP_GPIO_IOM0_SCL, AM_HAL_PIN_5_M0SCL | AM_HAL_GPIO_PULLUP);
-            am_hal_gpio_pin_config(AM_BSP_GPIO_IOM0_SDA, AM_HAL_PIN_6_M0SDA | AM_HAL_GPIO_PULLUP);
-            break;
-
-        case 1:
-            //
-            // Set pins high to prevent bus dips.
-            //
-            am_hal_gpio_out_bit_set(AM_BSP_GPIO_IOM1_SCL);
-            am_hal_gpio_out_bit_set(AM_BSP_GPIO_IOM1_SDA);
-
-            am_hal_gpio_pin_config(AM_BSP_GPIO_IOM1_SCL, AM_HAL_PIN_8_M1SCL | AM_HAL_GPIO_PULLUP);
-            am_hal_gpio_pin_config(AM_BSP_GPIO_IOM1_SDA, AM_HAL_PIN_9_M1SDA | AM_HAL_GPIO_PULLUP);
-            break;
-
-#ifndef AM_PART_APOLLO
-        case 2:
-            //
-            // Set pins high to prevent bus dips.
-            //
-            am_hal_gpio_out_bit_set(AM_BSP_GPIO_IOM2_SCL);
-            am_hal_gpio_out_bit_set(AM_BSP_GPIO_IOM2_SDA);
-
-            am_hal_gpio_pin_config(AM_BSP_GPIO_IOM2_SCL, AM_HAL_PIN_27_M2SCL | AM_HAL_GPIO_PULLUP);
-            am_hal_gpio_pin_config(AM_BSP_GPIO_IOM2_SDA, AM_HAL_PIN_25_M2SDA | AM_HAL_GPIO_PULLUP);
-            break;
-        case 3:
-            //
-            // Set pins high to prevent bus dips.
-            //
-            am_hal_gpio_out_bit_set(AM_BSP_GPIO_IOM3_SCL);
-            am_hal_gpio_out_bit_set(AM_BSP_GPIO_IOM3_SDA);
-
-            am_hal_gpio_pin_config(AM_BSP_GPIO_IOM3_SCL, AM_HAL_PIN_42_M3SCL | AM_HAL_GPIO_PULLUP);
-            am_hal_gpio_pin_config(AM_BSP_GPIO_IOM3_SDA, AM_HAL_PIN_43_M3SDA | AM_HAL_GPIO_PULLUP);
-            break;
-        case 4:
-            //
-            // Set pins high to prevent bus dips.
-            //
-            am_hal_gpio_out_bit_set(AM_BSP_GPIO_IOM4_SCL);
-            am_hal_gpio_out_bit_set(AM_BSP_GPIO_IOM4_SDA);
-
-            am_hal_gpio_pin_config(AM_BSP_GPIO_IOM4_SCL, AM_HAL_PIN_39_M4SCL | AM_HAL_GPIO_PULLUP);
-            am_hal_gpio_pin_config(AM_BSP_GPIO_IOM4_SDA, AM_HAL_PIN_40_M4SDA | AM_HAL_GPIO_PULLUP);
-            break;
-        case 5:
-            //
-            // Set pins high to prevent bus dips.
-            //
-            am_hal_gpio_out_bit_set(AM_BSP_GPIO_IOM5_SCL);
-            am_hal_gpio_out_bit_set(AM_BSP_GPIO_IOM5_SDA);
-
-            am_hal_gpio_pin_config(AM_BSP_GPIO_IOM5_SCL, AM_HAL_PIN_48_M5SCL | AM_HAL_GPIO_PULLUP);
-            am_hal_gpio_pin_config(AM_BSP_GPIO_IOM5_SDA, AM_HAL_PIN_49_M5SDA | AM_HAL_GPIO_PULLUP);
-            break;
-#endif
-        //
-        // If we get here, the caller's selected IOM interface couldn't be
-        // found in the BSP GPIO definitions. Halt program execution for
-        // debugging.
-        //
-        default:
-            while (1);
-    }
+    am_hal_iom_spi_write(iom, 0,
+                         pBuf, size, AM_HAL_IOM_OFFSET(offset));
 }
 
 static void
-iom_set_up(uint32_t iomModule, bool bSpi)
+iom_set_up(uint32_t iomModule)
 {
     //
     // Enable power to IOM.
     //
     am_hal_iom_pwrctrl_enable(iomModule);
 
-    if ( bSpi )
-    {
-        //
-        // Set the required configuration settings for the IOM.
-        //
-        am_hal_iom_config(iomModule, &g_sIOMSpiConfig);
+    //
+    // Set the required configuration settings for the IOM.
+    //
+    am_hal_iom_config(iomModule, &g_sIOMSpiConfig);
 
-        //
-        // Set up IOM SPI pins. Attributes are set in am_bsp_gpio.h.
-        //
-        am_bsp_iom_spi_pins_enable(iomModule);
+    //
+    // Set up IOM SPI pins. Attributes are set in am_bsp_gpio.h.
+    //
+    am_bsp_iom_spi_pins_enable(iomModule);
 
-        //
-        // Enable the chip-select and data-ready pin.
-        //! @note You can enable pins in the HAL or BSP.
-        //
-        am_hal_gpio_pin_config(apollo2_iomce0[iomModule][0],
-            apollo2_iomce0[iomModule][1]);
-    }
-    else
-    {
-        //
-        // Set the required configuration settings for the IOM.
-        //
-        am_hal_iom_config(iomModule, &g_sIOMI2cConfig);
+    //
+    // Enable the chip-select and data-ready pin.
+    //! @note You can enable pins in the HAL or BSP.
+    //
+    am_hal_gpio_pin_config(apollo2_iomce0[iomModule][0],
+        apollo2_iomce0[iomModule][1]);
 
-        i2c_pins_enable(iomModule);
-    }
     //
     // Turn on the IOM for this operation.
     //
@@ -444,30 +322,28 @@ update_progress(uint32_t ui32NumPackets)
 void iom_init(void)
 {
 	uint32_t iom = IOM_MODULE;
-    bool bSpi = USE_SPI;
     uint32_t data;
 	uint32_t ioIntEnable;
 	// Set up IOM & Enable interrupt for IOS
-    iom_set_up(iom, bSpi);
+    iom_set_up(iom);
 
 	// Set up IOCTL interrupts
     // IOS ==> IOM
     ioIntEnable = AM_IOSTEST_IOSTOHOST_DATAAVAIL_INTMASK;
-    iom_slave_write(iom, bSpi, IOSOFFSET_WRITE_INTEN, &ioIntEnable, 1);
+    iom_slave_write(iom, IOSOFFSET_WRITE_INTEN, &ioIntEnable, 1);
 
     // Send the START
     data = AM_IOSTEST_CMD_START_DATA;
-    iom_slave_write(iom, bSpi, IOSOFFSET_WRITE_CMD, &data, 1);
+    iom_slave_write(iom, IOSOFFSET_WRITE_CMD, &data, 1);
 }
 
 void iom_task(void)
 {
 	uint32_t iom = IOM_MODULE;
-    bool bSpi = USE_SPI;
     static bool bReadIosData = false;
     static bool bDone = false;
     uint32_t data;
-    uint32_t maxSize = (bSpi) ? MAX_SPI_SIZE: MAX_I2C_SIZE;
+    uint32_t maxSize = MAX_SPI_SIZE;
 
     if ( !bDone )
     {
@@ -475,12 +351,12 @@ void iom_task(void)
         {
             bIosInt = false;
             // Read & Clear the IOINT status
-            iom_slave_read(iom, bSpi, IOSOFFSET_READ_INTSTAT, &data, 1);
+            iom_slave_read(iom, IOSOFFSET_READ_INTSTAT, &data, 1);
             // We need to clear the bit by writing to IOS
             if ( data & AM_IOSTEST_IOSTOHOST_DATAAVAIL_INTMASK )
             {
                 data = AM_IOSTEST_IOSTOHOST_DATAAVAIL_INTMASK;
-                iom_slave_write(iom, bSpi, IOSOFFSET_WRITE_INTCLR, &data, 1);
+                iom_slave_write(iom, IOSOFFSET_WRITE_INTCLR, &data, 1);
                 // Set bReadIosData
                 bReadIosData = true;
             }
@@ -491,12 +367,12 @@ void iom_task(void)
                 bReadIosData = false;
 
                 // Read the Data Size
-                iom_slave_read(iom, bSpi, IOSOFFSET_READ_FIFOCTR, &iosSize, 2);
+                iom_slave_read(iom, IOSOFFSET_READ_FIFOCTR, &iosSize, 2);
                 iosSize = (iosSize > maxSize)? maxSize: iosSize;
                 // Initialize Rx Buffer for later comparison
                 clear_rx_buf();
                 // Read the data
-                iom_slave_read(iom, bSpi, IOSOFFSET_READ_FIFO,
+                iom_slave_read(iom, IOSOFFSET_READ_FIFO,
                     (uint32_t *)g_pui8RcvBuf, iosSize);
                 // Validate Content
                 if ( !validate_rx_buf(iosSize) )
@@ -515,7 +391,7 @@ void iom_task(void)
 					am_util_stdio_printf("\nTest Done - Total Received = =%d\n", g_startIdx);
                     data = AM_IOSTEST_CMD_STOP_DATA;
                 }
-                iom_slave_write(iom, bSpi, IOSOFFSET_WRITE_CMD, &data, 1);
+                iom_slave_write(iom, IOSOFFSET_WRITE_CMD, &data, 1);
 				
             }
         }
