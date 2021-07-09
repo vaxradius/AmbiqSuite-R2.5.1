@@ -93,6 +93,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include <string.h>
 #include "am_mcu_apollo.h"
 #include "am_bsp.h"
 #include "am_util.h"
@@ -369,11 +370,13 @@ void iom_task(void)
                 // Read the Data Size
                 iom_slave_read(iom, IOSOFFSET_READ_FIFOCTR, &iosSize, 2);
                 iosSize = (iosSize > maxSize)? maxSize: iosSize;
+#if 0
                 // Initialize Rx Buffer for later comparison
                 clear_rx_buf();
                 // Read the data
                 iom_slave_read(iom, IOSOFFSET_READ_FIFO,
                     (uint32_t *)g_pui8RcvBuf, iosSize);
+				
                 // Validate Content
                 if ( !validate_rx_buf(iosSize) )
                 {
@@ -392,7 +395,22 @@ void iom_task(void)
                     data = AM_IOSTEST_CMD_STOP_DATA;
                 }
                 iom_slave_write(iom, IOSOFFSET_WRITE_CMD, &data, 1);
+#else			
+				memset(g_pui8RcvBuf,0,sizeof(g_pui8RcvBuf));
+				// Read the data
+                iom_slave_read(iom, IOSOFFSET_READ_FIFO,
+                    (uint32_t *)g_pui8RcvBuf, iosSize);
+
+				am_util_stdio_printf("iosSize = %d\n",iosSize);
+				for(int i=0; i < iosSize; i++)
+					am_util_stdio_printf("%X ", *(g_pui8RcvBuf+i));
 				
+				am_util_stdio_printf("\n%s\n\n",g_pui8RcvBuf);
+				
+				// Send the ACK
+                data = AM_IOSTEST_CMD_ACK_DATA;
+				iom_slave_write(iom, IOSOFFSET_WRITE_CMD, &data, 1);
+#endif				
             }
         }
     }	

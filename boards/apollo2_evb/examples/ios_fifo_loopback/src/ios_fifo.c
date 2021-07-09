@@ -103,7 +103,7 @@
 // written to the FIFO made it to the host intact
 // This allows us to configure these values to unrealistically high values for
 // testing purpose
-#define     SENSOR0_FREQ   12 // 12 times a second
+#define     SENSOR0_FREQ   1 // 12 times a second
 
 
 #define     XOR_BYTE            0
@@ -449,10 +449,12 @@ void ios_task(void)
 
     uint32_t numWritten = 0;
     uint32_t chunk1;
+	static uint32_t u32Count = 0;
 
     if (g_bSensor0Data)
     {
-        chunk1 = AM_TEST_REF_BUF_SIZE - g_sendIdx;
+#if 0
+		chunk1 = AM_TEST_REF_BUF_SIZE - g_sendIdx;
         if (chunk1 > SENSOR0_DATA_SIZE)
         {
             numWritten = am_hal_ios_fifo_write(&g_pui8TestBuf[g_sendIdx], SENSOR0_DATA_SIZE);
@@ -468,6 +470,9 @@ void ios_task(void)
 
         g_sendIdx += numWritten;
         g_sendIdx %= AM_TEST_REF_BUF_SIZE;
+#else
+		ios_spi_printf("%d ios_spi_printf\n",u32Count++);
+#endif
         g_bSensor0Data = false;
     }
    
