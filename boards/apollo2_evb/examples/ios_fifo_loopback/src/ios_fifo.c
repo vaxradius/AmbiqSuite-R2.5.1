@@ -268,6 +268,13 @@ init_sensor(void)
     am_hal_interrupt_master_enable();
 }
 
+void config_FW_VER(void)
+{
+	uint8_t  *pui8FWVER;
+    pui8FWVER = (uint8_t *) am_hal_ios_pui8LRAM+1;
+	*pui8FWVER = 0x23;
+}
+
 //*****************************************************************************
 //
 // Configure the SPI slave.
@@ -442,6 +449,7 @@ void ios_init(void)
     // Enable the IOS. Choose the correct protocol based on USE_SPI
     //
     ios_set_up();
+	config_FW_VER();
 }
 
 void ios_task(void)

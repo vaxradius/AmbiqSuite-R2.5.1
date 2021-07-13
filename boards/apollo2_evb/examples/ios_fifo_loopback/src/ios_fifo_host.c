@@ -114,9 +114,11 @@ typedef enum
     AM_IOSTEST_CMD_ACK_DATA      = 2,
 } AM_IOSTEST_CMD_E;
 
-#define IOSOFFSET_WRITE_INTEN       0xF8
-#define IOSOFFSET_WRITE_INTCLR      0xFA
-#define IOSOFFSET_WRITE_CMD         0x80
+#define WRITE_BIT (1 << 7)
+#define IOSOFFSET_WRITE_INTEN       (0x78 | WRITE_BIT)
+#define IOSOFFSET_WRITE_INTCLR      (0x7A | WRITE_BIT)
+#define IOSOFFSET_WRITE_CMD         (0x00 | WRITE_BIT)
+#define IOSOFFSET_READ_FW_VER		0x01
 #define IOSOFFSET_READ_INTSTAT      0x79
 #define IOSOFFSET_READ_FIFO         0x7F
 #define IOSOFFSET_READ_FIFOCTR      0x7C
@@ -327,6 +329,10 @@ void iom_init(void)
 	uint32_t ioIntEnable;
 	// Set up IOM & Enable interrupt for IOS
     iom_set_up(iom);
+
+	// Read FW version from the offset1 of direct area.
+	iom_slave_read(iom, IOSOFFSET_READ_FW_VER,&data, 1);
+	am_util_stdio_printf("FW_VER: 0x%X\n", data);
 
 	// Set up IOCTL interrupts
     // IOS ==> IOM
