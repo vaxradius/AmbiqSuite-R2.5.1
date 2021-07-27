@@ -54,18 +54,23 @@
 #include "am_util.h"
 
 #include "sgp40.h"
+#include "shtc1.h"
 
 int16_t sensirion_init_sensors(void) {
-    int16_t ret;
+	int16_t ret;
 
-    sensirion_i2c_init();
+	sensirion_i2c_init();
 
-    ret = sgp40_probe();
-    if (ret)
-        return -1;
+	ret = shtc1_probe();
+	if (ret)
+		return -1;
 
-    //VocAlgorithm_init(&voc_algorithm_params);
-    return 0;
+	ret = sgp40_probe();
+	if (ret)
+		return -1;
+
+	//VocAlgorithm_init(&voc_algorithm_params);
+	return 0;
 }
 
 //*****************************************************************************
@@ -115,8 +120,8 @@ main(void)
     // Print the banner.
     //
     am_util_stdio_terminal_clear();
-    am_util_stdio_printf("Hello World!\n\n");
-
+    am_util_stdio_printf("Hello Sensirion!\n\n");
+	
 	sensirion_init_sensors();
 
     //

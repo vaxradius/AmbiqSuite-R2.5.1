@@ -28,7 +28,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-
+#include "am_util.h"
 #include "sgp40.h"
 #include "sgp_git_version.h"
 
@@ -132,7 +132,12 @@ int16_t sgp40_get_serial_id(uint8_t* serial_id) {
 }
 
 int16_t sgp40_probe(void) {
+	int16_t ret;
     uint8_t serial[SGP40_SERIAL_ID_NUM_BYTES];
 
-    return sgp40_get_serial_id(serial);
+	ret = sgp40_get_serial_id(serial);
+
+	am_util_stdio_printf("sgp40_get_serial_id:0x%02X%02X%02X%02X%02X%02X ret:%d\n", serial[5], serial[4],serial[3],serial[2],serial[1],serial[0], ret);
+
+    return ret;
 }
