@@ -417,6 +417,16 @@
               <FileType>1</FileType>
               <FilePath>..\src\sht_git_version.c</FilePath>
             </File>
+            <File>
+              <FileName>sgp40_voc_index.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\src\sgp40_voc_index.c</FilePath>
+            </File>
+            <File>
+              <FileName>sensirion_voc_algorithm.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\src\sensirion_voc_algorithm.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>

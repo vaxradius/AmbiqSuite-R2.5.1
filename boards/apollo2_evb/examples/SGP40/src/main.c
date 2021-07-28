@@ -53,25 +53,39 @@
 #include "am_bsp.h"
 #include "am_util.h"
 
-#include "sgp40.h"
-#include "shtc1.h"
+#include "sgp40_voc_index.h"
 
-int16_t sensirion_init_sensors(void) {
-	int16_t ret;
+void sensirion(void)
+{
+    int32_t voc_index;
+    int32_t temperature_celsius;
+    int32_t relative_humidity_percent;
+    int16_t err;
 
-	sensirion_i2c_init();
+    /* Initialize I2C bus, SHT, SGP and VOC Engine */
+    while ((err = sensirion_init_sensors())) {
+        am_util_stdio_printf("initialization failed: %d\n", err);
+        sensirion_sleep_usec(1000000); /* wait one second */
+    }
+    am_util_stdio_printf("initialization successful\n");
 
-	ret = shtc1_probe();
-	if (ret)
-		return -1;
+    /* Run one measurement per second */
+    while (1) {
+        err = sensirion_measure_voc_index_with_rh_t(
+            &voc_index, &relative_humidity_percent, &temperature_celsius);
+        if (err == STATUS_OK) {
+            am_util_stdio_printf("VOC Index: %i\n", voc_index);
+            am_util_stdio_printf("Temperature: %0.3fdegC\n", temperature_celsius * 0.001f);
+            am_util_stdio_printf("Relative Humidity: %0.3f%%RH\n",
+                   relative_humidity_percent * 0.001f);
+        } else {
+            am_util_stdio_printf("error reading signal: %d\n", err);
+        }
 
-	ret = sgp40_probe();
-	if (ret)
-		return -1;
-
-	//VocAlgorithm_init(&voc_algorithm_params);
-	return 0;
+        sensirion_sleep_usec(1000000); /* wait one second */
+    }
 }
+
 
 //*****************************************************************************
 //
@@ -122,7 +136,7 @@ main(void)
     am_util_stdio_terminal_clear();
     am_util_stdio_printf("Hello Sensirion!\n\n");
 	
-	sensirion_init_sensors();
+	sensirion();
 
     //
     // We are done printing.

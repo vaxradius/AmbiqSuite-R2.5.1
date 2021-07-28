@@ -65,6 +65,10 @@ static const uint8_t SHTC1_ADDRESS = 0x70;
 
 static uint16_t shtc1_cmd_measure = SHTC1_CMD_MEASURE_HPM;
 
+int16_t shtc1_soft_reset(void) {
+    return sensirion_i2c_write_cmd(SHTC1_ADDRESS, 0x3062);
+}
+
 int16_t shtc1_sleep(void) {
     return sensirion_i2c_write_cmd(SHTC1_ADDRESS, SHTC3_CMD_SLEEP);
 }
@@ -112,6 +116,7 @@ int16_t shtc1_probe(void) {
 	(void)shtc1_wake_up(); /* Try to wake up the sensor, ignore return value */
 	ret = shtc1_read_serial(&serial);
 	am_util_stdio_printf("shtc1_read_serial:0x%X ret:%d\n", serial, ret);
+	
 	return ret;
 }
 
