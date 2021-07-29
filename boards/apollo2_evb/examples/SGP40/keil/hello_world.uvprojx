@@ -427,6 +427,11 @@
               <FileType>1</FileType>
               <FilePath>..\src\sensirion_voc_algorithm.c</FilePath>
             </File>
+            <File>
+              <FileName>ICE11101.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\src\ICE11101.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>

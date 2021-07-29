@@ -54,6 +54,22 @@
 #include "am_util.h"
 
 #include "sgp40_voc_index.h"
+#include "ICE11101.h"
+
+
+void tdk(void)
+{
+	int16_t ret = 0;
+	uint16_t robert_value = 0x8000;
+	uint16_t read_back_value = 0;
+
+	//trying to write to the register location 0x808(REG_USR_CONTROL) with a value: 0x8000 
+	ret = tdk_i2c_write_reg_with_args(ICE11101_I2C_ADDR, REG_USR_CONTROL, (const uint16_t* )&robert_value,1);
+	am_util_stdio_printf("tdk_i2c_write_reg_with_args() return %d\n", ret);
+	//and then another write to register location 0x800(REG_USR_WHO_AM_I) and read back the value: 0xc000 correctly.
+	ret = tdk_i2c_delayed_read_cmd(ICE11101_I2C_ADDR, REG_USR_WHO_AM_I,0, &read_back_value,1);
+	am_util_stdio_printf("tdk_i2c_delayed_read_cmd() return %d\n read_back_value=0x%X", ret, read_back_value);
+}
 
 void sensirion(void)
 {
@@ -68,6 +84,8 @@ void sensirion(void)
         sensirion_sleep_usec(1000000); /* wait one second */
     }
     am_util_stdio_printf("initialization successful\n");
+
+	tdk();
 
     /* Run one measurement per second */
     while (1) {
@@ -134,7 +152,7 @@ main(void)
     // Print the banner.
     //
     am_util_stdio_terminal_clear();
-    am_util_stdio_printf("Hello Sensirion!\n\n");
+    am_util_stdio_printf("Hello Sensirion & TDK!\n\n");
 	
 	sensirion();
 
