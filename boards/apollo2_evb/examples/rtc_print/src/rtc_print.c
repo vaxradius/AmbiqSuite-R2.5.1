@@ -104,7 +104,7 @@ am_hal_ctimer_config_t g_sTimer0 =
     // Set up TimerA0.
     (AM_HAL_CTIMER_FN_REPEAT |
      AM_HAL_CTIMER_INT_ENABLE |
-     AM_HAL_CTIMER_LFRC_32HZ),
+     AM_HAL_CTIMER_XT_256HZ),
 
     // No configuration required for TimerB0.
     0,
@@ -126,7 +126,7 @@ timerA0_init(void)
     //
     // Enable the LFRC.
     //
-    am_hal_clkgen_osc_start(AM_HAL_CLKGEN_OSC_LFRC);
+    am_hal_clkgen_osc_start(AM_HAL_CLKGEN_OSC_XT);
 
     //
     // Set up timer A0.
@@ -137,7 +137,11 @@ timerA0_init(void)
     //
     // Set the timing for timerA0.
     //
-    am_hal_ctimer_period_set(0, AM_HAL_CTIMER_TIMERA, 31, 0);
+    //The CMPR fields are handled in hardware
+	//as (n+1) values, therefore ui32Period is actually specified as 1 less than
+	//the desired period
+	//For clock source:XT_256HZ and period:30sec, the ui32Period should be (256*30)-1.
+    am_hal_ctimer_period_set(0, AM_HAL_CTIMER_TIMERA, (256*30)-1, 0);
 
     //
     // Clear the timer Interrupt
