@@ -56,7 +56,7 @@
 // Macro definitions
 //
 //*****************************************************************************
-#define RISING_EDGE_COUNT   500     // Turn 500 Hz (LFRC/2) clkout into 1 Hz blinky
+
 
 //*****************************************************************************
 //
@@ -66,8 +66,6 @@
 int
 main(void)
 {
-    int32_t iRisingCount, iLEDcount;
-    bool bNewClkout, bOldClkout;
 
     //
     // Set the clock frequency.
@@ -108,9 +106,7 @@ main(void)
     // Clear the terminal and print the banner.
     //
     am_util_stdio_terminal_clear();
-    am_util_stdio_printf("CLKOUT to LED Example\n");
-    am_util_stdio_printf("\tWalks the board LEDs about once a second based on the CLKOUT "
-                         "signal.\n");
+    am_util_stdio_printf("CLKOUT to GPIO4 Example\n");
 
     //
     // We are done printing. Disable debug printf messages on ITM.
@@ -118,89 +114,26 @@ main(void)
     am_bsp_debug_printf_disable();
 
     //
-    // Clear the LED.
+    // Enable the XT.
     //
-    am_devices_led_array_init(am_bsp_psLEDs, AM_BSP_NUM_LEDS);
-
-    //
-    // Enable the LFRC.
-    //
-    am_hal_clkgen_osc_start(AM_HAL_CLKGEN_OSC_LFRC);
+    am_hal_clkgen_osc_start(AM_HAL_CLKGEN_OSC_XT);
 
     //
     // Enable the clockout to the desired pin.
-    // And make it readable on the pin with AM_HAL_GPIO_INPEN
     //
-    am_hal_gpio_pin_config(AM_BSP_GPIO_CLKOUT_PIN,
-                           (AM_BSP_GPIO_CFG_CLKOUT_PIN | AM_HAL_GPIO_INPEN));
+    am_hal_gpio_pin_config(4, AM_HAL_PIN_4_CLKOUT);
 
     //
     // Initialize clkgen to output the selected clock.
     //
-    am_hal_clkgen_clkout_enable(AM_HAL_CLKGEN_CLKOUT_CKSEL_LFRC_DIV2);
+    am_hal_clkgen_clkout_enable(AM_HAL_CLKGEN_CLKOUT_CKSEL_XT);
 
-    //
-    // Initialize LED 0 to on
-    //
-    am_devices_led_toggle(am_bsp_psLEDs, 0);
-    iLEDcount = 1;      // LED 1 is next
-
-    //
-    // Initialize loop variables
-    //
-    iRisingCount = RISING_EDGE_COUNT;
-    bOldClkout = false;
-
-    //
-    // Loop forever tracking the rising edge of CLKOUT.
-    //
     while (1)
     {
         //
-        // Grab new clock output value and look for a change.
+        // Go to Sleep and stay there.
         //
-        bNewClkout = am_hal_gpio_input_bit_read(AM_BSP_GPIO_CLKOUT_PIN);
-
-        //
-        // Look for any change.
-        //
-        if ( bOldClkout != bNewClkout )
-        {
-            //
-            // OK a change occurred.
-            //
-            bOldClkout = bNewClkout;
-
-            //
-            //  Was it rising or falling.
-            //
-            if ( bNewClkout )
-            {
-                //
-                // It was rising so count them until time to act.
-                //
-                if (--iRisingCount < 0)
-                {
-                    //
-                    // Act on the time out (walk the 4 LEDs)
-                    //
-                    am_devices_led_off(am_bsp_psLEDs, 0);
-                    am_devices_led_off(am_bsp_psLEDs, 1);
-                    am_devices_led_off(am_bsp_psLEDs, 2);
-                    am_devices_led_off(am_bsp_psLEDs, 3);
-                    am_devices_led_off(am_bsp_psLEDs, 4);
-                    am_devices_led_on(am_bsp_psLEDs, iLEDcount);
-                    iLEDcount++;
-                    iLEDcount %= 5;
-
-                    //
-                    // Reset the rising edge count.
-                    //
-                    iRisingCount = RISING_EDGE_COUNT;
-                }
-            }
-        }
-
+        am_hal_sysctrl_sleep(AM_HAL_SYSCTRL_SLEEP_NORMAL);
     }
 
 }
