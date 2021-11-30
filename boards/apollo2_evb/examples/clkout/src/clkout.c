@@ -105,28 +105,52 @@ main(void)
     //
     // Clear the terminal and print the banner.
     //
-    am_util_stdio_terminal_clear();
-    am_util_stdio_printf("CLKOUT to GPIO4 Example\n");
+	am_util_stdio_terminal_clear();
+	am_util_stdio_printf("CLKOUT to GPIO4 Example\n\n");
+	
+	am_util_stdio_printf("1. Write 0x47 to the CLKKEY register to enable access to CLK_GEN registers\n");
+	AM_REG(CLKGEN, CLKKEY) = 0x47;
+	
+	am_util_stdio_printf("2. Set the CALXT register field to 0 to insure calibration is not occurring.\n");
+	AM_REG(CLKGEN, CALXT) = 0;
+
+
+	am_util_stdio_printf("3. Select the XT oscillator by setting the REG_CLKGEN_OCTRL_OSEL bit to 0.\n");
+	//
+	// Enable the XT.
+	//
+	am_hal_clkgen_osc_start(AM_HAL_CLKGEN_OSC_XT);
+	
+	am_util_stdio_printf("4. Select the XT or a division of it on a CLKOUT pad.\n");
+	//
+	// Enable the clockout to the desired pin.
+	//
+	am_hal_gpio_pin_config(4, AM_HAL_PIN_4_CLKOUT);
+
+	
+	//
+	// Initialize clkgen to output the selected clock.
+	//
+	am_hal_clkgen_clkout_enable(AM_HAL_CLKGEN_CLKOUT_CKSEL_XT_DIV2);
+	
+	am_util_stdio_printf("5. Measure the frequency Fmeas at the CLKOUT pad.\n");
+	am_util_stdio_printf("6. Compute the adjustment value required in ppm as ((Fnom – Fmeas)*1000000)/Fmeas = PAdj\n");
+	am_util_stdio_printf("7. Compute the adjustment value in steps as PAdj/(1000000/219) = PAdj/(0.9535) = Adj\n");
+	am_util_stdio_printf("8. Compare Adj value with min/max range of -976 to 975\n");
+	
+	am_util_stdio_printf("9. If target Adj is within min and max, set CALXT = Adj\n");
+	AM_REG(CLKGEN, CALXT) = (-976 & 0x7FF);
+	////AM_REG(CLKGEN, CALXT) = (975 & 0x7FF);
+	am_util_stdio_printf("10. Otherwise, the XT frequency is too low to be calibrated.\n");
 
     //
     // We are done printing. Disable debug printf messages on ITM.
     //
     am_bsp_debug_printf_disable();
 
-    //
-    // Enable the XT.
-    //
-    am_hal_clkgen_osc_start(AM_HAL_CLKGEN_OSC_XT);
 
-    //
-    // Enable the clockout to the desired pin.
-    //
-    am_hal_gpio_pin_config(4, AM_HAL_PIN_4_CLKOUT);
 
-    //
-    // Initialize clkgen to output the selected clock.
-    //
-    am_hal_clkgen_clkout_enable(AM_HAL_CLKGEN_CLKOUT_CKSEL_XT);
+
 
     while (1)
     {
