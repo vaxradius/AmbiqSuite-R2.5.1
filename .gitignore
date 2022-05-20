@@ -5,6 +5,7 @@
 *.map
 *.htm
 *.khuang
+*.kimi
 *.scvd
 *.dep
 *.iex

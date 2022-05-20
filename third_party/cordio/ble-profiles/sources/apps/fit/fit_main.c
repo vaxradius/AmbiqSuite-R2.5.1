@@ -115,8 +115,8 @@ static const appUpdateCfg_t fitUpdateCfg =
 {
   3000,                                      /*! Connection idle period in ms before attempting
                                               connection parameter update; set to zero to disable */
-  48,                                    /*! Minimum connection interval in 1.25ms units */
-  60,                                    /*! Maximum connection interval in 1.25ms units */
+  12,                                    /*! Minimum connection interval in 1.25ms units */
+  12,                                    /*! Maximum connection interval in 1.25ms units */
   4,                                      /*! Connection latency */
   600,                                    /*! Supervision timeout in 10ms units */
   5                                       /*! Number of update attempts before giving up */
@@ -360,11 +360,8 @@ static void fitProcCccState(fitMsg_t *pMsg)
   {
     if (pMsg->ccc.value == ATT_CLIENT_CFG_NOTIFY)
     {
-      HrpsMeasStart((dmConnId_t) pMsg->ccc.hdr.param, FIT_HR_TIMER_IND, FIT_HRS_HRM_CCC_IDX);
-    }
-    else
-    {
-      HrpsMeasStop((dmConnId_t) pMsg->ccc.hdr.param);
+      uint8_t ui8Data[40] = {0xA5};
+      AttsHandleValueNtf((dmConnId_t) pMsg->ccc.hdr.param, HRS_HRM_HDL, 40, ui8Data);
     }
     return;
   }
@@ -588,8 +585,13 @@ static void fitProcMsg(fitMsg_t *pMsg)
       break;
 
     case ATTS_HANDLE_VALUE_CNF:
-      HrpsProcMsg(&pMsg->hdr);
-      BasProcMsg(&pMsg->hdr);
+    {
+      if (((attEvt_t *)pMsg)->handle == HRS_HRM_HDL)
+      {
+        uint8_t ui8Data[40] = {0xA5};
+        AttsHandleValueNtf(AppConnIsOpen(), HRS_HRM_HDL, 40, ui8Data);
+      }
+    }
       break;
 
     case ATTS_CCC_STATE_IND:
