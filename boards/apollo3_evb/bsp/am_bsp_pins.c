@@ -233,7 +233,7 @@ const am_hal_gpio_pincfg_t g_AM_BSP_GPIO_UART_RTS =
 //*****************************************************************************
 const am_hal_gpio_pincfg_t g_AM_BSP_GPIO_IOM0_CS =
 {
-    .uFuncSel            = AM_HAL_PIN_11_NCE11,
+    .uFuncSel            = AM_HAL_PIN_8_NCE8,
     .eDriveStrength      = AM_HAL_GPIO_PIN_DRIVESTRENGTH_12MA,
     .eGPOutcfg           = AM_HAL_GPIO_PIN_OUTCFG_PUSHPULL,
     .eGPInput            = AM_HAL_GPIO_PIN_INPUT_NONE,

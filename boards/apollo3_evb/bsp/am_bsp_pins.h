@@ -195,7 +195,7 @@ extern const am_hal_gpio_pincfg_t       g_AM_BSP_GPIO_UART_RTS;
 //  IOM0_CS pin: I/O Master 0 chip select.
 //
 //*****************************************************************************
-#define AM_BSP_GPIO_IOM0_CS             11
+#define AM_BSP_GPIO_IOM0_CS             8
 extern const am_hal_gpio_pincfg_t       g_AM_BSP_GPIO_IOM0_CS;
 #define AM_BSP_IOM0_CS_CHNL             0
 
