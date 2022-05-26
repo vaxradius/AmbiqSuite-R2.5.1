@@ -127,11 +127,11 @@ main(void)
 	am_hal_pwrctrl_memory_deepsleep_retain(AM_HAL_PWRCTRL_MEM_SRAM_32K_DTCM);
 
 
-	ios_set_up(0);
+	ios_set_up(1);
 
 	am_util_delay_ms(100);
 
-	iom_set_up(0, 0);
+	iom_set_up(0, 1);
 
 
 	while (1)

@@ -64,7 +64,7 @@
 #include "am_bsp.h"
 #include "am_util.h"
 
-#define USE_SPI             0   // 0 = I2C, 1 = SPI
+#define USE_SPI             1   // 0 = I2C, 1 = SPI
 #define I2C_ADDR            0x10
 
 #define HANDSHAKE_IOS_PIN   4

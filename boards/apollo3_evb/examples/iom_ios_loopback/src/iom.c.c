@@ -67,7 +67,7 @@
 #include "am_util.h"
 
 #define IOM_MODULE                  0
-#define USE_SPI                     0   // 0 = I2C, 1 = SPI
+#define USE_SPI                     1   // 0 = I2C, 1 = SPI
 #define I2C_ADDR                    0x10
 
 #define AM_IOSTEST_CMD_START_DATA   0xFD
@@ -104,11 +104,11 @@ static am_hal_iom_config_t g_sIOMSpiConfig =
 	//    .ui32ClockFreq = AM_HAL_IOM_12MHZ,
 	//    .ui32ClockFreq = AM_HAL_IOM_8MHZ,
 	//    .ui32ClockFreq = AM_HAL_IOM_6MHZ,
-	.ui32ClockFreq = AM_HAL_IOM_4MHZ,
+	//.ui32ClockFreq = AM_HAL_IOM_4MHZ,
 	//    .ui32ClockFreq = AM_HAL_IOM_3MHZ,
 	//    .ui32ClockFreq = AM_HAL_IOM_2MHZ,
 	//    .ui32ClockFreq = AM_HAL_IOM_1_5MHZ,
-	//    .ui32ClockFreq = AM_HAL_IOM_1MHZ,
+	    .ui32ClockFreq = AM_HAL_IOM_1MHZ,
 	//    .ui32ClockFreq = AM_HAL_IOM_750KHZ,
 	//    .ui32ClockFreq = AM_HAL_IOM_500KHZ,
 	//    .ui32ClockFreq = AM_HAL_IOM_400KHZ,
