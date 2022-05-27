@@ -63,17 +63,47 @@
 
 //*****************************************************************************
 //
-// Init function for the STimer.
+// Init function for the CTimer.
 //
 //*****************************************************************************
-void
-stimer_init(void)
+static am_hal_ctimer_config_t g_cTimer =
 {
-    //
-    // Configure the STIMER and run
-    //
-    am_hal_stimer_config(AM_HAL_STIMER_CFG_CLEAR | AM_HAL_STIMER_CFG_FREEZE);
-    am_hal_stimer_config(AM_HAL_STIMER_XTAL_32KHZ);
+    // link timers.
+    1,
+
+    // Set up TimerA.
+    (AM_HAL_CTIMER_FN_REPEAT|
+      AM_HAL_CTIMER_HFRC_12MHZ),
+
+    // Set up TimerB.
+    (AM_HAL_CTIMER_FN_REPEAT |
+      AM_HAL_CTIMER_HFRC_12MHZ),
+};
+
+void
+ctimer_init(void)
+{
+	uint32_t ui32Delta = 0;
+	//
+	// Set up timer 0.
+	//
+	am_hal_ctimer_config(0, &g_cTimer);
+
+	//
+	// test it with am_util_delay_us.
+	//
+	am_hal_ctimer_clear(0, AM_HAL_CTIMER_BOTH);
+	am_hal_ctimer_start(0, AM_HAL_CTIMER_BOTH);
+
+	am_util_delay_ms(718);
+	am_util_delay_us(992);
+
+	am_hal_ctimer_stop(0, AM_HAL_CTIMER_BOTH);
+
+	ui32Delta = am_hal_ctimer_read(0, AM_HAL_CTIMER_BOTH);
+
+
+	am_util_stdio_printf("Delta: %d.%03d ms\n", ui32Delta/12000, (ui32Delta% 12000) /12);
 }
 
 //*****************************************************************************
@@ -154,7 +184,6 @@ prime_number(int32_t i32n)
 int
 main(void)
 {
-    uint32_t                      ui32StartTime, ui32StopTime;
     uint32_t                      ui32BurstModeDelta, ui32NormalModeDelta;
     am_hal_burst_avail_e          eBurstModeAvailable;
     am_hal_burst_mode_e           eBurstMode;
@@ -187,9 +216,9 @@ main(void)
     am_util_stdio_printf("%s TurboSPOT Example\n\n", AM_HAL_DEVICE_NAME);
 
     //
-    // Initialize the STimer.
+    // Initialize the CTimer.
     //
-    stimer_init();
+    ctimer_init();
 
     //
     // Check that the TurboSPOT Feature is available.
@@ -230,23 +259,20 @@ main(void)
     //
     am_util_stdio_printf("\nStarted calculating primes in Normal Mode\n");
 
-    //
-    // Capture the start time.
-    //
-    ui32StartTime = am_hal_stimer_counter_get();
+
+    am_hal_ctimer_clear(0, AM_HAL_CTIMER_BOTH);
+    am_hal_ctimer_start(0, AM_HAL_CTIMER_BOTH);
 
     am_util_stdio_printf("\nNumber of Primes: %d\n", prime_number(NUM_OF_PRIMES_IN));
 
-    //
-    // Stop the timer and calculate the elapsed time.
-    //
-    ui32StopTime = am_hal_stimer_counter_get();
+    am_hal_ctimer_stop(0, AM_HAL_CTIMER_BOTH);
+
+    ui32NormalModeDelta = am_hal_ctimer_read(0, AM_HAL_CTIMER_BOTH);
 
     //
     // Calculate the TurboSPOT mode delta time.
     //
-    ui32NormalModeDelta = ui32StopTime - ui32StartTime;
-    am_util_stdio_printf("Normal Mode Delta: %d\n", ui32NormalModeDelta);
+    am_util_stdio_printf("Normal Mode Delta: %d.%03d ms\n", ui32NormalModeDelta/12000, (ui32NormalModeDelta% 12000) /12);
 
     //
     // Put the MCU into TurboSPOT mode.
@@ -279,17 +305,12 @@ main(void)
         am_util_stdio_printf("\nTurboSPOT mode not available, started calculating primes in Normal mode.\n");
     }
 
-    //
-    // Capture the start time.
-    //
-    ui32StartTime = am_hal_stimer_counter_get();
+    am_hal_ctimer_clear(0, AM_HAL_CTIMER_BOTH);
+    am_hal_ctimer_start(0, AM_HAL_CTIMER_BOTH);
 
     am_util_stdio_printf("\nNumber of Primes: %d\n", prime_number(NUM_OF_PRIMES_IN));
 
-    //
-    // Stop the timer and calculate the elapsed time.
-    //
-    ui32StopTime = am_hal_stimer_counter_get();
+    am_hal_ctimer_stop(0, AM_HAL_CTIMER_BOTH);
 
     //
     // Disable TurboSPOT Mode.
@@ -313,8 +334,8 @@ main(void)
     //
     // Calculate the TurboSPOT mode delta time.
     //
-    ui32BurstModeDelta = ui32StopTime - ui32StartTime;
-    am_util_stdio_printf("TurboSPOT mode Delta: %d\n", ui32BurstModeDelta);
+    ui32BurstModeDelta = am_hal_ctimer_read(0, AM_HAL_CTIMER_BOTH);
+    am_util_stdio_printf("TurboSPOT Mode Delta: %d.%03d ms\n", ui32BurstModeDelta/12000, (ui32BurstModeDelta% 12000) /12);
 
     //
     // End of example.
