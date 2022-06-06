@@ -182,7 +182,8 @@ void hciCoreResetSequence(uint8_t *pMsg)
           hciCoreCb.numBufs--;
         }
 
-        hciCoreCb.availBufs = hciCoreCb.numBufs;
+        //hciCoreCb.availBufs = hciCoreCb.numBufs;
+        hciCoreCb.availBufs = 1;
 
         /* send next command in sequence */
         HciLeReadSupStatesCmd();

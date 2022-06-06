@@ -22,6 +22,8 @@
  *  limitations under the License.
  */
 /*************************************************************************************************/
+#include "am_mcu_apollo.h"
+#include "am_bsp.h"
 
 #include <string.h>
 #include "wsf_types.h"
@@ -115,8 +117,8 @@ static const appUpdateCfg_t fitUpdateCfg =
 {
   3000,                                      /*! Connection idle period in ms before attempting
                                               connection parameter update; set to zero to disable */
-  12,                                    /*! Minimum connection interval in 1.25ms units */
-  12,                                    /*! Maximum connection interval in 1.25ms units */
+  6,                                    /*! Minimum connection interval in 1.25ms units */
+  6,                                    /*! Maximum connection interval in 1.25ms units */
   4,                                      /*! Connection latency */
   600,                                    /*! Supervision timeout in 10ms units */
   5                                       /*! Number of update attempts before giving up */
@@ -148,6 +150,14 @@ static const smpCfg_t fitSmpCfg =
   64000,                                  /*! Maximum repeated attempts timeout in msec */
   64000,                                  /*! Time msec before attemptExp decreases */
   2                                       /*! Repeated attempts multiplier exponent */
+};
+
+static const attCfg_t fitAttCfg =
+{
+  15,                               /* ATT server service discovery connection idle timeout in seconds */
+  43,                               /* desired ATT MTU, max value is ATT_MAX_MTU */
+  ATT_MAX_TRANS_TIMEOUT,            /* transcation timeout in seconds */
+  4                                 /* number of queued prepare writes supported by server */
 };
 
 /**************************************************************************************************
@@ -319,7 +329,6 @@ static void fitSendRunningSpeedMeasurement(dmConnId_t connId)
   {
     static uint8_t walk_run = 1;
 
-    /* TODO: Set Running Speed and Cadence Measurement Parameters */
 
     RscpsSetParameter(RSCP_SM_PARAM_SPEED, 1);
     RscpsSetParameter(RSCP_SM_PARAM_CADENCE, 2);
@@ -342,6 +351,10 @@ static void fitSendRunningSpeedMeasurement(dmConnId_t connId)
   WsfTimerStartSec(&fitRscmTimer, fitRscmPeriod);
 }
 
+
+static uint8_t s_ui8Data[40];
+static uint8_t s_ui8Cnt = 0;
+
 /*************************************************************************************************/
 /*!
  *  \brief  Process CCC state change.
@@ -360,8 +373,10 @@ static void fitProcCccState(fitMsg_t *pMsg)
   {
     if (pMsg->ccc.value == ATT_CLIENT_CFG_NOTIFY)
     {
-      uint8_t ui8Data[40] = {0xA5};
-      AttsHandleValueNtf((dmConnId_t) pMsg->ccc.hdr.param, HRS_HRM_HDL, 40, ui8Data);
+      s_ui8Data[0] = 0xA5;
+      s_ui8Data[1] = s_ui8Cnt++;
+      s_ui8Data[39] = s_ui8Cnt;
+      AttsHandleValueNtf((dmConnId_t) pMsg->ccc.hdr.param, HRS_HRM_HDL, sizeof(s_ui8Data), s_ui8Data);
     }
     return;
   }
@@ -433,8 +448,8 @@ static void fitSetup(fitMsg_t *pMsg)
   AppAdvSetData(APP_SCAN_DATA_DISCOVERABLE, sizeof(fitScanDataDisc), (uint8_t *) fitScanDataDisc);
 
   /* set advertising and scan response data for connectable mode */
-  AppAdvSetData(APP_ADV_DATA_CONNECTABLE, 0, NULL);
-  AppAdvSetData(APP_SCAN_DATA_CONNECTABLE, 0, NULL);
+  AppAdvSetData(APP_ADV_DATA_CONNECTABLE, sizeof(fitAdvDataDisc), (uint8_t *) fitAdvDataDisc);
+  AppAdvSetData(APP_SCAN_DATA_CONNECTABLE, sizeof(fitScanDataDisc), (uint8_t *) fitScanDataDisc);
 
   /* start advertising; automatically set connectable/discoverable mode and bondable mode */
   AppAdvStart(APP_MODE_AUTO_INIT);
@@ -586,10 +601,29 @@ static void fitProcMsg(fitMsg_t *pMsg)
 
     case ATTS_HANDLE_VALUE_CNF:
     {
-      if (((attEvt_t *)pMsg)->handle == HRS_HRM_HDL)
+      attEvt_t *psEvt = (attEvt_t *)pMsg;
+
+      if (psEvt->handle == HRS_HRM_HDL)
       {
-        uint8_t ui8Data[40] = {0xA5};
-        AttsHandleValueNtf(AppConnIsOpen(), HRS_HRM_HDL, 40, ui8Data);
+        if (psEvt->hdr.status == ATT_SUCCESS)
+        {
+          if (AttsCccEnabled(psEvt->hdr.param, FIT_HRS_HRM_CCC_IDX))
+          {
+            s_ui8Data[0] = 0xA5;
+            s_ui8Data[1] = s_ui8Cnt++;
+            s_ui8Data[39] = s_ui8Cnt;
+            AttsHandleValueNtf(psEvt->hdr.param, HRS_HRM_HDL, 40, s_ui8Data);          
+          }
+          else
+          {
+            APP_TRACE_INFO0("Stop sending notifications of HRM due to CCC disabled");
+          }          
+        }
+        else
+      {
+            APP_TRACE_INFO1("Stop sending notifications of HRM due to the status 0x%02X", psEvt->hdr.status);
+        }
+
       }
     }
       break;
@@ -599,7 +633,8 @@ static void fitProcMsg(fitMsg_t *pMsg)
       break;
 
     case ATT_MTU_UPDATE_IND:
-      APP_TRACE_INFO1("Negotiated MTU %d", ((attEvt_t *)pMsg)->mtu);
+      APP_TRACE_INFO0("ATT_MTU_UPDATE_IND");
+      APP_TRACE_INFO1(" mtu %d", ((attEvt_t *)pMsg)->mtu);
       break;
 
     case DM_RESET_CMPL_IND:
@@ -626,6 +661,21 @@ static void fitProcMsg(fitMsg_t *pMsg)
       break;
 
     case DM_CONN_OPEN_IND:
+      APP_TRACE_INFO0("DM_CONN_OPEN_IND");
+      APP_TRACE_INFO1(" connId        = %d", ((dmEvt_t*)pMsg)->hdr.param);
+      APP_TRACE_INFO1(" handle        = %d", ((dmEvt_t*)pMsg)->connOpen.handle);
+      APP_TRACE_INFO1(" role          = %d", ((dmEvt_t*)pMsg)->connOpen.role);
+      APP_TRACE_INFO3(" addrMSB       = %02X:%02X:%02X", \
+                                          ((dmEvt_t*)pMsg)->connOpen.peerAddr[0], \
+                                          ((dmEvt_t*)pMsg)->connOpen.peerAddr[1], \
+                                          ((dmEvt_t*)pMsg)->connOpen.peerAddr[2]);
+      APP_TRACE_INFO3(" addrLSB       = %02X:%02X:%02X", \
+                                          ((dmEvt_t*)pMsg)->connOpen.peerAddr[3], \
+                                          ((dmEvt_t*)pMsg)->connOpen.peerAddr[4], \
+                                          ((dmEvt_t*)pMsg)->connOpen.peerAddr[5]);
+      APP_TRACE_INFO1(" connInterval  = %d", ((dmEvt_t*)pMsg)->connOpen.connInterval);
+      APP_TRACE_INFO1(" connLatency   = %d", ((dmEvt_t*)pMsg)->connOpen.connLatency);
+      APP_TRACE_INFO1(" supTimeout    = %d", ((dmEvt_t*)pMsg)->connOpen.supTimeout);
       HrpsProcMsg(&pMsg->hdr);
       BasProcMsg(&pMsg->hdr);
       // AppSlaveSecurityReq(1);
@@ -635,6 +685,27 @@ static void fitProcMsg(fitMsg_t *pMsg)
     case DM_CONN_CLOSE_IND:
       fitClose(pMsg);
       uiEvent = APP_UI_CONN_CLOSE;
+      break;
+      
+    case DM_CONN_UPDATE_IND:
+      APP_TRACE_INFO0("DM_CONN_UPDATE_IND");
+      APP_TRACE_INFO1(" connId        = %d", ((dmEvt_t*)pMsg)->hdr.param);
+      APP_TRACE_INFO1(" handle        = %d", ((dmEvt_t*)pMsg)->connUpdate.handle);
+      APP_TRACE_INFO1(" connInterval  = %d", ((dmEvt_t*)pMsg)->connUpdate.connInterval);
+      APP_TRACE_INFO1(" connLatency   = %d", ((dmEvt_t*)pMsg)->connUpdate.connLatency);
+      APP_TRACE_INFO1(" supTimeout    = %d", ((dmEvt_t*)pMsg)->connUpdate.supTimeout);
+      break;
+
+    case DM_CONN_DATA_LEN_CHANGE_IND:
+      APP_TRACE_INFO0("DM_CONN_DATA_LEN_CHANGE_IND");
+      APP_TRACE_INFO1(" connId        = %d", ((dmEvt_t*)pMsg)->hdr.param);
+      APP_TRACE_INFO1(" handle        = %d", ((dmEvt_t*)pMsg)->dataLenChange.handle);
+      APP_TRACE_INFO1(" Tx            = %d", ((dmEvt_t*)pMsg)->dataLenChange.maxTxOctets);
+      APP_TRACE_INFO1(" Rx            = %d", ((dmEvt_t*)pMsg)->dataLenChange.maxRxOctets);      
+      break;
+
+    case DM_PHY_UPDATE_IND:
+      APP_TRACE_INFO3("DM_PHY_UPDATE_IND status: %d, RX: %d, TX: %d", pMsg->dm.phyUpdate.status,pMsg->dm.phyUpdate.rxPhy, pMsg->dm.phyUpdate.txPhy);
       break;
 
     case DM_SEC_PAIR_CMPL_IND:
@@ -739,6 +810,7 @@ void FitHandlerInit(wsfHandlerId_t handlerId)
   pAppSlaveCfg = (appSlaveCfg_t *) &fitSlaveCfg;
   pAppSecCfg = (appSecCfg_t *) &fitSecCfg;
   pAppUpdateCfg = (appUpdateCfg_t *) &fitUpdateCfg;
+  pAttCfg = (attCfg_t *) &fitAttCfg;
 
   /* Initialize application framework */
   AppSlaveInit();
@@ -769,7 +841,6 @@ void FitHandler(wsfEventMask_t event, wsfMsgHdr_t *pMsg)
 {
   if (pMsg != NULL)
   {
-    APP_TRACE_INFO1("Fit got evt %d", pMsg->event);
 
     /* process ATT messages */
     if (pMsg->event >= ATT_CBACK_START && pMsg->event <= ATT_CBACK_END)
@@ -780,6 +851,8 @@ void FitHandler(wsfEventMask_t event, wsfMsgHdr_t *pMsg)
     /* process DM messages */
     else if (pMsg->event >= DM_CBACK_START && pMsg->event <= DM_CBACK_END)
     {
+      APP_TRACE_INFO1("Fit got evt %d", pMsg->event);
+
       /* process advertising and connection-related messages */
       AppSlaveProcDmMsg((dmEvt_t *) pMsg);
 
