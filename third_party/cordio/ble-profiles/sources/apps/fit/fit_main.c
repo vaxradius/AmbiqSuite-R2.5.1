@@ -612,7 +612,7 @@ static void fitProcMsg(fitMsg_t *pMsg)
             s_ui8Data[0] = 0xA5;
             s_ui8Data[1] = s_ui8Cnt++;
             s_ui8Data[39] = s_ui8Cnt;
-	      am_hal_gpio_state_write(11, AM_HAL_GPIO_OUTPUT_TOGGLE);
+	      am_hal_gpio_state_write(10, AM_HAL_GPIO_OUTPUT_TOGGLE);
             AttsHandleValueNtf(psEvt->hdr.param, HRS_HRM_HDL, 40, s_ui8Data);          
           }
           else
@@ -903,6 +903,6 @@ void FitStart(void)
 
   /* Reset the device */
   DmDevReset();
-  am_hal_gpio_state_write(11, AM_HAL_GPIO_OUTPUT_SET);
-  am_hal_gpio_pinconfig(11, g_AM_HAL_GPIO_OUTPUT);
+  am_hal_gpio_state_write(10, AM_HAL_GPIO_OUTPUT_SET);
+  am_hal_gpio_pinconfig(10, g_AM_HAL_GPIO_OUTPUT);
 }
