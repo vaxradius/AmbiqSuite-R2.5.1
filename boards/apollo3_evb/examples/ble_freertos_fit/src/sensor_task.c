@@ -69,10 +69,16 @@ static am_hal_ctimer_config_t g_sTimer =
     0,
 };
 
+static uint8_t s_ui8Data[40];
+static uint8_t s_ui8Cnt = 0;
+
 static void
 Ctimer_handler(void)
 {
-	 am_hal_gpio_state_write(9, AM_HAL_GPIO_OUTPUT_TOGGLE);
+	BaseType_t xHigherPriorityTaskWoken;
+	xHigherPriorityTaskWoken = pdFALSE;
+	vTaskNotifyGiveFromISR( sensor_task_handle, &xHigherPriorityTaskWoken );
+	portYIELD_FROM_ISR( xHigherPriorityTaskWoken );
 }
 
 static void
@@ -124,6 +130,11 @@ SensorTaskSetup(void)
 	
 	init_Ctimer();
 
+
+}
+
+void Start_SensorTimer(void)
+{
 	//
 	// Stop timer A0. Just in case host died without sending STOP last time
 	//
@@ -134,6 +145,11 @@ SensorTaskSetup(void)
 	am_hal_ctimer_start(0, AM_HAL_CTIMER_TIMERA);
 }
 
+void Stop_SensorTimer(void)
+{
+	am_hal_ctimer_stop(0, AM_HAL_CTIMER_TIMERA);
+}
+
 //*****************************************************************************
 //
 // Short Description.
@@ -142,7 +158,17 @@ SensorTaskSetup(void)
 void
 SensorTask(void *pvParameters)
 {
-	vTaskSuspend(NULL);
+	for(;;)
+	{
+		ulTaskNotifyTake(
+                                 pdTRUE,          /* Clear the notification value before exiting. */
+                                 portMAX_DELAY ); /* Block indefinitely. */
 
-	while (1);
+		am_hal_gpio_state_write(9, AM_HAL_GPIO_OUTPUT_TOGGLE);
+
+		s_ui8Data[0] = 0xA5;
+		s_ui8Data[1] = s_ui8Cnt++;
+		s_ui8Data[39] = s_ui8Cnt;
+		fitSendNotification(40, s_ui8Data);
+	}
 }

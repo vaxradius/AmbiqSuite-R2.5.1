@@ -352,8 +352,20 @@ static void fitSendRunningSpeedMeasurement(dmConnId_t connId)
 }
 
 
-static uint8_t s_ui8Data[40];
-static uint8_t s_ui8Cnt = 0;
+
+
+void fitSendNotification(uint16_t valueLen, uint8_t *pValue)
+{
+	dmConnId_t      connId;
+
+	if ((connId = AppConnIsOpen()) != DM_CONN_ID_NONE)
+	{
+		if (AttsCccEnabled(connId, FIT_HRS_HRM_CCC_IDX))
+		{
+			AttsHandleValueNtf(connId, HRS_HRM_HDL, valueLen, pValue);
+		}
+	}
+}
 
 /*************************************************************************************************/
 /*!
@@ -372,12 +384,9 @@ static void fitProcCccState(fitMsg_t *pMsg)
   if (pMsg->ccc.idx == FIT_HRS_HRM_CCC_IDX)
   {
     if (pMsg->ccc.value == ATT_CLIENT_CFG_NOTIFY)
-    {
-      s_ui8Data[0] = 0xA5;
-      s_ui8Data[1] = s_ui8Cnt++;
-      s_ui8Data[39] = s_ui8Cnt;
-      AttsHandleValueNtf((dmConnId_t) pMsg->ccc.hdr.param, HRS_HRM_HDL, sizeof(s_ui8Data), s_ui8Data);
-    }
+        Start_SensorTimer();
+    else
+        Stop_SensorTimer();
     return;
   }
 
@@ -609,11 +618,17 @@ static void fitProcMsg(fitMsg_t *pMsg)
         {
           if (AttsCccEnabled(psEvt->hdr.param, FIT_HRS_HRM_CCC_IDX))
           {
+		#if 0
             s_ui8Data[0] = 0xA5;
             s_ui8Data[1] = s_ui8Cnt++;
             s_ui8Data[39] = s_ui8Cnt;
 	      am_hal_gpio_state_write(10, AM_HAL_GPIO_OUTPUT_TOGGLE);
-            AttsHandleValueNtf(psEvt->hdr.param, HRS_HRM_HDL, 40, s_ui8Data);          
+            AttsHandleValueNtf(psEvt->hdr.param, HRS_HRM_HDL, 40, s_ui8Data);
+	      //AttsHandleValueNtf(psEvt->hdr.param, HRS_HRM_HDL, 20, s_ui8Data+20);
+	      #else
+		  am_hal_gpio_state_write(10, AM_HAL_GPIO_OUTPUT_TOGGLE);
+		//fitSendNotification();
+		#endif
           }
           else
           {
