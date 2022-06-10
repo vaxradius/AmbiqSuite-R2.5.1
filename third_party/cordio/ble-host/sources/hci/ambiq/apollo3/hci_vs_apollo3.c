@@ -181,7 +181,7 @@ void hciCoreResetSequence(uint8_t *pMsg)
         {
           hciCoreCb.numBufs--;
         }
-        hciCoreCb.numBufs = 1;
+
         hciCoreCb.availBufs = hciCoreCb.numBufs;
 
         /* send next command in sequence */

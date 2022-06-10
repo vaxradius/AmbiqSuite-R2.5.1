@@ -41,13 +41,13 @@
 
 /* Default ACL buffer flow control watermark levels */
 #ifndef HCI_ACL_QUEUE_HI
-//#define HCI_ACL_QUEUE_HI          5             /* Disable flow when this many buffers queued */
-#define HCI_ACL_QUEUE_HI          2             /* Disable flow when this many buffers queued */
+#define HCI_ACL_QUEUE_HI          5             /* Disable flow when this many buffers queued */
+//#define HCI_ACL_QUEUE_HI          2             /* Disable flow when this many buffers queued */
 #endif
 #ifndef HCI_ACL_QUEUE_LO
 #if defined(AM_PART_APOLLO3) || defined(AM_PART_APOLLO3P)
-//#define HCI_ACL_QUEUE_LO          3             /* Enable flow when this many buffers queued */
-#define HCI_ACL_QUEUE_LO          1             /* Enable flow when this many buffers queued */
+#define HCI_ACL_QUEUE_LO          3             /* Enable flow when this many buffers queued */
+//#define HCI_ACL_QUEUE_LO          1             /* Enable flow when this many buffers queued */
 #else
 #define HCI_ACL_QUEUE_LO          1             /* Enable flow when this many buffers queued */
 #endif
