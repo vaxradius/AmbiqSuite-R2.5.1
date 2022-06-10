@@ -1,13 +1,5 @@
 //*****************************************************************************
 //
-//! @file freertos_fit.h
-//!
-//! @brief Global includes for the freertos_fit app.
-//
-//*****************************************************************************
-
-//*****************************************************************************
-//
 // Copyright (c) 2020, Ambiq Micro, Inc.
 // All rights reserved.
 //
@@ -44,47 +36,22 @@
 //
 //*****************************************************************************
 
-#ifndef FREERTOS_FIT_H
-#define FREERTOS_FIT_H
+#ifndef SENSOR_TASK_H
+#define SENSOR_TASK_H
 
 //*****************************************************************************
 //
-// Required built-ins.
+// Sensor task handle.
 //
 //*****************************************************************************
-#include <stdint.h>
-#include <stdbool.h>
-#include <string.h>
-#include <stdlib.h>
+extern TaskHandle_t sensor_task_handle;
 
 //*****************************************************************************
 //
-// Standard AmbiqSuite includes.
+// External function definitions.
 //
 //*****************************************************************************
-#include "am_mcu_apollo.h"
-#include "am_bsp.h"
-#include "am_util.h"
+extern void SensorTaskSetup(void);
+extern void SensorTask(void *pvParameters);
 
-//*****************************************************************************
-//
-// FreeRTOS include files.
-//
-//*****************************************************************************
-#include "FreeRTOS.h"
-#include "task.h"
-#include "portmacro.h"
-#include "portable.h"
-#include "semphr.h"
-#include "event_groups.h"
-//#include "rtos.h"
-
-//*****************************************************************************
-//
-// Task include files.
-//
-//*****************************************************************************
-#include "radio_task.h"
-#include "Sensor_task.h"
-
-#endif // FREERTOS_FIT_H
+#endif // SENSOR_TASK_H

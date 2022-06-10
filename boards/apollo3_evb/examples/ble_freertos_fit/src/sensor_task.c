@@ -1,13 +1,5 @@
 //*****************************************************************************
 //
-//! @file freertos_fit.h
-//!
-//! @brief Global includes for the freertos_fit app.
-//
-//*****************************************************************************
-
-//*****************************************************************************
-//
 // Copyright (c) 2020, Ambiq Micro, Inc.
 // All rights reserved.
 //
@@ -44,47 +36,113 @@
 //
 //*****************************************************************************
 
-#ifndef FREERTOS_FIT_H
-#define FREERTOS_FIT_H
+//*****************************************************************************
+//
+// Global includes for this project.
+//
+//*****************************************************************************
+#include "ble_freertos_fit.h"
 
 //*****************************************************************************
 //
-// Required built-ins.
+// Sensor task handle.
 //
 //*****************************************************************************
-#include <stdint.h>
-#include <stdbool.h>
-#include <string.h>
-#include <stdlib.h>
+TaskHandle_t sensor_task_handle;
 
 //*****************************************************************************
 //
-// Standard AmbiqSuite includes.
+// Timer handling to execute XIP codes
 //
 //*****************************************************************************
-#include "am_mcu_apollo.h"
-#include "am_bsp.h"
-#include "am_util.h"
+static am_hal_ctimer_config_t g_sTimer =
+{
+    // Don't link timers.
+    0,
+
+    // Set up TimerA.
+    (AM_HAL_CTIMER_FN_REPEAT |
+     AM_HAL_CTIMER_INT_ENABLE    |
+     AM_HAL_CTIMER_HFRC_3MHZ),
+
+    // No configuration for TimerB.
+    0,
+};
+
+static void
+Ctimer_handler(void)
+{
+	 am_hal_gpio_state_write(9, AM_HAL_GPIO_OUTPUT_TOGGLE);
+}
+
+static void
+init_Ctimer(void)
+{
+	uint32_t ui32Period;
+
+	//
+	// Set up timer A0.
+	//
+	am_hal_ctimer_clear(0, AM_HAL_CTIMER_TIMERA);
+	am_hal_ctimer_config(0, &g_sTimer);
+
+	//HFRC_3MHZ 1500 is 0.5ms 
+	ui32Period = (1500 * 15); //7.5ms
+	am_hal_ctimer_period_set(0, AM_HAL_CTIMER_TIMERA, ui32Period,
+	                         (ui32Period>>1));
+
+	//
+	// Clear the timer Interrupt
+	//
+	am_hal_ctimer_int_clear(AM_HAL_CTIMER_INT_TIMERA0);
+
+	//
+	// Enable the timer Interrupt.
+	//
+	am_hal_ctimer_int_register(AM_HAL_CTIMER_INT_TIMERA0, Ctimer_handler);
+	am_hal_ctimer_int_enable(AM_HAL_CTIMER_INT_TIMERA0);
+
+	//
+	// Enable the timer interrupt in the NVIC.
+	//
+	NVIC_EnableIRQ(CTIMER_IRQn);
+	NVIC_SetPriority(CTIMER_IRQn, NVIC_configMAX_SYSCALL_INTERRUPT_PRIORITY);
+}
 
 //*****************************************************************************
 //
-// FreeRTOS include files.
+// Perform initial setup for the sensor task.
 //
 //*****************************************************************************
-#include "FreeRTOS.h"
-#include "task.h"
-#include "portmacro.h"
-#include "portable.h"
-#include "semphr.h"
-#include "event_groups.h"
-//#include "rtos.h"
+void
+SensorTaskSetup(void)
+{
+	am_util_debug_printf("SensorTask: setup\r\n");
+
+	am_hal_gpio_state_write(9, AM_HAL_GPIO_OUTPUT_SET); 
+	am_hal_gpio_pinconfig(9, g_AM_HAL_GPIO_OUTPUT);
+	
+	init_Ctimer();
+
+	//
+	// Stop timer A0. Just in case host died without sending STOP last time
+	//
+	am_hal_ctimer_stop(0, AM_HAL_CTIMER_TIMERA);
+	//
+	// Start timer A0
+	//
+	am_hal_ctimer_start(0, AM_HAL_CTIMER_TIMERA);
+}
 
 //*****************************************************************************
 //
-// Task include files.
+// Short Description.
 //
 //*****************************************************************************
-#include "radio_task.h"
-#include "Sensor_task.h"
+void
+SensorTask(void *pvParameters)
+{
+	vTaskSuspend(NULL);
 
-#endif // FREERTOS_FIT_H
+	while (1);
+}

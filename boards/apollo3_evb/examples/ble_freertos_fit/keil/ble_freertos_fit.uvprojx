@@ -10,12 +10,13 @@
       <TargetName>ble_freertos_fit</TargetName>
       <ToolsetNumber>0x4</ToolsetNumber>
       <ToolsetName>ARM-ADS</ToolsetName>
-      <pArmCC></pArmCC>
+      <pCCUsed>5060960::V5.06 update 7 (build 960)::.\ARMCC</pCCUsed>
+      <uAC6>0</uAC6>
       <TargetOption>
         <TargetCommonOption>
           <Device>AMA3B1KK-KBR</Device>
           <Vendor>Ambiq Micro</Vendor>
-          <PackID>AmbiqMicro.Apollo_DFP.1.1.0</PackID>
+          <PackID>AmbiqMicro.Apollo_DFP.1.2.8</PackID>
           <PackURL>http://s3.asia.ambiqmicro.com/pack/</PackURL>
           <Cpu>IRAM(0x10000000,0x00060000) IROM(0x0000C000,0x000F4000) CPUTYPE("Cortex-M4") FPU2 CLOCK(48000000) ELITTLE</Cpu>
           <FlashUtilSpec></FlashUtilSpec>
@@ -183,6 +184,8 @@
             <hadXRAM>0</hadXRAM>
             <uocXRam>0</uocXRam>
             <RvdsVP>2</RvdsVP>
+            <RvdsMve>0</RvdsMve>
+            <RvdsCdeCp>0</RvdsCdeCp>
             <hadIRAM2>0</hadIRAM2>
             <hadIROM2>0</hadIROM2>
             <StupSel>8</StupSel>
@@ -247,8 +250,8 @@
               </IRAM>
               <IROM>
                 <Type>1</Type>
-                <StartAddress>0xC000</StartAddress>
-                <Size>0xF4000</Size>
+                <StartAddress>0xc000</StartAddress>
+                <Size>0xf4000</Size>
               </IROM>
               <XRAM>
                 <Type>0</Type>
@@ -272,8 +275,8 @@
               </OCR_RVCT3>
               <OCR_RVCT4>
                 <Type>1</Type>
-                <StartAddress>0xC000</StartAddress>
-                <Size>0xF4000</Size>
+                <StartAddress>0xc000</StartAddress>
+                <Size>0xf4000</Size>
               </OCR_RVCT4>
               <OCR_RVCT5>
                 <Type>1</Type>
@@ -323,6 +326,7 @@
             <uThumb>0</uThumb>
             <uSurpInc>0</uSurpInc>
             <uC99>1</uC99>
+            <uGnu>0</uGnu>
             <useXO>0</useXO>
             <v6Lang>1</v6Lang>
             <v6LangP>1</v6LangP>
@@ -348,7 +352,7 @@
             <NoWarn>0</NoWarn>
             <uSurpInc>0</uSurpInc>
             <useXO>0</useXO>
-            <uClangAs>0</uClangAs>
+            <ClangAsOpt>4</ClangAsOpt>
             <VariousControls>
               <MiscControls></MiscControls>
               <Define></Define>
@@ -763,6 +767,11 @@
               <FileName>rtos.c</FileName>
               <FileType>1</FileType>
               <FilePath>../src/rtos.c</FilePath>
+            </File>
+            <File>
+              <FileName>sensor_task.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\src\sensor_task.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -1407,4 +1416,3 @@
   </RTE>
 
 </Project>
-
