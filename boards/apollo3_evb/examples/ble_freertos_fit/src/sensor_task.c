@@ -162,6 +162,9 @@ void
 SensorTask(void *pvParameters)
 {
 	uint32_t NotificationValue = 0;
+	uint16_t miss_count = 0;
+	TickType_t xTicks = 0;
+	TickType_t xTicksDelta = 0;
 	for(;;)
 	{
 		xTaskNotifyWait(
@@ -171,12 +174,32 @@ SensorTask(void *pvParameters)
                                 portMAX_DELAY );    /* Block indefinitely. */
 		if(NotificationValue & (1<<1))//From ATTS_HANDLE_VALUE_CNF
 		{
+			xTicksDelta = (xTaskGetTickCount() - xTicks);
+
 			am_hal_gpio_state_write(9, AM_HAL_GPIO_OUTPUT_TOGGLE);
 
-			s_ui8Data[0] = 0xA5;
-			s_ui8Data[1] = s_ui8Cnt++;
-			s_ui8Data[39] = s_ui8Cnt;
-			fitSendNotification(40, s_ui8Data);
+			if(xTicksDelta/portTICK_PERIOD_MS > 8)
+			{
+				miss_count ++;
+			}
+			
+			if(xTicksDelta/portTICK_PERIOD_MS > 1)
+			{
+				s_ui8Data[0] = 0xA5;
+				s_ui8Data[1] = s_ui8Cnt++;
+				s_ui8Data[2] = 0;
+				s_ui8Data[39] = s_ui8Cnt;
+				fitSendNotification(40, s_ui8Data);
+			}
+			else
+			{
+				s_ui8Data[0] = 0x5A;
+				s_ui8Data[1] = (uint8_t)(miss_count >> 8);
+				s_ui8Data[2] = (uint8_t)miss_count;
+				fitSendNotification(40, s_ui8Data);
+			}
+
+			xTicks = xTaskGetTickCount();
 		}
 
 		//if(NotificationValue & (1<<0)) // From Ctimer handler
