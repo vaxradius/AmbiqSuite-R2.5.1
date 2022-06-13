@@ -51,6 +51,10 @@
 #include "rscp/rscp_api.h"
 #include "fit_api.h"
 
+#include "FreeRTOS.h"
+#include "task.h"
+#include "sensor_task.h"
+
 /**************************************************************************************************
   Macros
 **************************************************************************************************/
@@ -630,8 +634,9 @@ static void fitProcMsg(fitMsg_t *pMsg)
 			{
 				if (AttsCccEnabled(psEvt->hdr.param, FIT_HRS_HRM_CCC_IDX))
 				{
-#if 0
+#if 1
 					am_hal_gpio_state_write(10, AM_HAL_GPIO_OUTPUT_TOGGLE);
+					xTaskNotify( sensor_task_handle, (1<<1),eSetBits);
 #else
 					{
 						static uint32_t mycount = 0;

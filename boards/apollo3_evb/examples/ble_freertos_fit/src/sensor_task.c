@@ -77,7 +77,10 @@ Ctimer_handler(void)
 {
 	BaseType_t xHigherPriorityTaskWoken;
 	xHigherPriorityTaskWoken = pdFALSE;
-	vTaskNotifyGiveFromISR( sensor_task_handle, &xHigherPriorityTaskWoken );
+	xTaskNotifyFromISR( sensor_task_handle, 
+                               (1<<0),
+                               eSetBits,
+                               &xHigherPriorityTaskWoken );
 	portYIELD_FROM_ISR( xHigherPriorityTaskWoken );
 }
 
@@ -158,17 +161,25 @@ void Stop_SensorTimer(void)
 void
 SensorTask(void *pvParameters)
 {
+	uint32_t NotificationValue = 0;
 	for(;;)
 	{
-		ulTaskNotifyTake(
-                                 pdTRUE,          /* Clear the notification value before exiting. */
-                                 portMAX_DELAY ); /* Block indefinitely. */
+		xTaskNotifyWait(
+                                0x00,               /* Don't clear any bits on entry. */
+                                0xffffffffUL,          /* Clear all bits on exit. */
+                                &NotificationValue, /* Receives the notification value. */
+                                portMAX_DELAY );    /* Block indefinitely. */
+		if(NotificationValue & (1<<1))//From ATTS_HANDLE_VALUE_CNF
+		{
+			am_hal_gpio_state_write(9, AM_HAL_GPIO_OUTPUT_TOGGLE);
 
-		am_hal_gpio_state_write(9, AM_HAL_GPIO_OUTPUT_TOGGLE);
+			s_ui8Data[0] = 0xA5;
+			s_ui8Data[1] = s_ui8Cnt++;
+			s_ui8Data[39] = s_ui8Cnt;
+			fitSendNotification(40, s_ui8Data);
+		}
 
-		s_ui8Data[0] = 0xA5;
-		s_ui8Data[1] = s_ui8Cnt++;
-		s_ui8Data[39] = s_ui8Cnt;
-		fitSendNotification(40, s_ui8Data);
+		//if(NotificationValue & (1<<0)) // From Ctimer handler
+		//	am_hal_gpio_state_write(9, AM_HAL_GPIO_OUTPUT_TOGGLE);
 	}
 }
