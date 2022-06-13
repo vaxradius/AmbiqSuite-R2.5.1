@@ -367,6 +367,8 @@ void fitSendNotification(uint16_t valueLen, uint8_t *pValue)
 	}
 }
 
+static uint8_t s_ui8Data[40];
+static uint8_t s_ui8Cnt = 0;
 /*************************************************************************************************/
 /*!
  *  \brief  Process CCC state change.
@@ -378,45 +380,55 @@ void fitSendNotification(uint16_t valueLen, uint8_t *pValue)
 /*************************************************************************************************/
 static void fitProcCccState(fitMsg_t *pMsg)
 {
-  APP_TRACE_INFO3("ccc state ind value:%d handle:%d idx:%d", pMsg->ccc.value, pMsg->ccc.handle, pMsg->ccc.idx);
+	APP_TRACE_INFO3("ccc state ind value:%d handle:%d idx:%d", pMsg->ccc.value, pMsg->ccc.handle, pMsg->ccc.idx);
 
-  /* handle heart rate measurement CCC */
-  if (pMsg->ccc.idx == FIT_HRS_HRM_CCC_IDX)
-  {
-    if (pMsg->ccc.value == ATT_CLIENT_CFG_NOTIFY)
-        Start_SensorTimer();
-    else
-        Stop_SensorTimer();
-    return;
-  }
+	/* handle heart rate measurement CCC */
+	if (pMsg->ccc.idx == FIT_HRS_HRM_CCC_IDX)
+	{
+#if 0
+		if (pMsg->ccc.value == ATT_CLIENT_CFG_NOTIFY)
+			Start_SensorTimer();
+		else
+			Stop_SensorTimer();
+#else
+		if (pMsg->ccc.value == ATT_CLIENT_CFG_NOTIFY)
+		{
+			s_ui8Data[0] = 0xA5;
+			s_ui8Data[1] = s_ui8Cnt++;
+			s_ui8Data[39] = s_ui8Cnt;
+			fitSendNotification(40, s_ui8Data);
+		}
+#endif
+		return;
+	}
 
-  /* handle running speed and cadence measurement CCC */
-  if (pMsg->ccc.idx == FIT_RSCS_SM_CCC_IDX)
-  {
-    if (pMsg->ccc.value == ATT_CLIENT_CFG_NOTIFY)
-    {
-      fitSendRunningSpeedMeasurement((dmConnId_t)pMsg->ccc.hdr.param);
-    }
-    else
-    {
-      WsfTimerStop(&fitRscmTimer);
-    }
-    return;
-  }
+	/* handle running speed and cadence measurement CCC */
+	if (pMsg->ccc.idx == FIT_RSCS_SM_CCC_IDX)
+	{
+		if (pMsg->ccc.value == ATT_CLIENT_CFG_NOTIFY)
+		{
+			fitSendRunningSpeedMeasurement((dmConnId_t)pMsg->ccc.hdr.param);
+		}
+		else
+		{
+			WsfTimerStop(&fitRscmTimer);
+		}
+		return;
+	}
 
-  /* handle battery level CCC */
-  if (pMsg->ccc.idx == FIT_BATT_LVL_CCC_IDX)
-  {
-    if (pMsg->ccc.value == ATT_CLIENT_CFG_NOTIFY)
-    {
-      BasMeasBattStart((dmConnId_t) pMsg->ccc.hdr.param, FIT_BATT_TIMER_IND, FIT_BATT_LVL_CCC_IDX);
-    }
-    else
-    {
-      BasMeasBattStop((dmConnId_t) pMsg->ccc.hdr.param);
-    }
-    return;
-  }
+	/* handle battery level CCC */
+	if (pMsg->ccc.idx == FIT_BATT_LVL_CCC_IDX)
+	{
+		if (pMsg->ccc.value == ATT_CLIENT_CFG_NOTIFY)
+		{
+			BasMeasBattStart((dmConnId_t) pMsg->ccc.hdr.param, FIT_BATT_TIMER_IND, FIT_BATT_LVL_CCC_IDX);
+		}
+		else
+		{
+			BasMeasBattStop((dmConnId_t) pMsg->ccc.hdr.param);
+		}
+		return;
+	}
 }
 
 /*************************************************************************************************/
@@ -608,41 +620,47 @@ static void fitProcMsg(fitMsg_t *pMsg)
       BasProcMsg(&pMsg->hdr);
       break;
 
-    case ATTS_HANDLE_VALUE_CNF:
-    {
-      attEvt_t *psEvt = (attEvt_t *)pMsg;
+	case ATTS_HANDLE_VALUE_CNF:
+	{
+		attEvt_t *psEvt = (attEvt_t *)pMsg;
 
-      if (psEvt->handle == HRS_HRM_HDL)
-      {
-        if (psEvt->hdr.status == ATT_SUCCESS)
-        {
-          if (AttsCccEnabled(psEvt->hdr.param, FIT_HRS_HRM_CCC_IDX))
-          {
-		#if 0
-            s_ui8Data[0] = 0xA5;
-            s_ui8Data[1] = s_ui8Cnt++;
-            s_ui8Data[39] = s_ui8Cnt;
-	      am_hal_gpio_state_write(10, AM_HAL_GPIO_OUTPUT_TOGGLE);
-            AttsHandleValueNtf(psEvt->hdr.param, HRS_HRM_HDL, 40, s_ui8Data);
-	      //AttsHandleValueNtf(psEvt->hdr.param, HRS_HRM_HDL, 20, s_ui8Data+20);
-	      #else
-		  am_hal_gpio_state_write(10, AM_HAL_GPIO_OUTPUT_TOGGLE);
-		//fitSendNotification();
-		#endif
-          }
-          else
-          {
-            APP_TRACE_INFO0("Stop sending notifications of HRM due to CCC disabled");
-          }          
-        }
-        else
-      {
-            APP_TRACE_INFO1("Stop sending notifications of HRM due to the status 0x%02X", psEvt->hdr.status);
-        }
+		if (psEvt->handle == HRS_HRM_HDL)
+		{
+			if (psEvt->hdr.status == ATT_SUCCESS)
+			{
+				if (AttsCccEnabled(psEvt->hdr.param, FIT_HRS_HRM_CCC_IDX))
+				{
+#if 0
+					am_hal_gpio_state_write(10, AM_HAL_GPIO_OUTPUT_TOGGLE);
+#else
+					{
+						static uint32_t mycount = 0;
+						if(mycount++%2)
+						{
+							s_ui8Data[0] = 0xA5;
+							s_ui8Data[1] = s_ui8Cnt++;
+							s_ui8Data[39] = s_ui8Cnt;
+							am_hal_gpio_state_write(10, AM_HAL_GPIO_OUTPUT_TOGGLE);
+							AttsHandleValueNtf(psEvt->hdr.param, HRS_HRM_HDL, 40, s_ui8Data);
+						}
+						else
+							AttsHandleValueNtf(psEvt->hdr.param, HRS_HRM_HDL, 40, s_ui8Data);//Dummy
+					}
+#endif
+				}
+				else
+				{
+					APP_TRACE_INFO0("Stop sending notifications of HRM due to CCC disabled");
+				}          
+			}
+			else
+			{
+				APP_TRACE_INFO1("Stop sending notifications of HRM due to the status 0x%02X", psEvt->hdr.status);
+			}
 
-      }
-    }
-      break;
+		}
+	}
+	break;
 
     case ATTS_CCC_STATE_IND:
       fitProcCccState(pMsg);
