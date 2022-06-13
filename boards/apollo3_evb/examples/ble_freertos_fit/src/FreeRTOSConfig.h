@@ -84,14 +84,9 @@ extern "C"
 #define configUSE_MALLOC_FAILED_HOOK            1
 
 /* Run time and task stats gathering related definitions. */
-#define configGENERATE_RUN_TIME_STATS           1
-#define configUSE_TRACE_FACILITY                1
-#define configUSE_STATS_FORMATTING_FUNCTIONS    1
-#define configSUPPORT_DYNAMIC_ALLOCATION 	1
-extern void vConfigureTimerForRunTimeStats( void );
-extern uint32_t vGET_RUN_TIME_COUNTER_VALUE( void );
-#define portCONFIGURE_TIMER_FOR_RUN_TIME_STATS() vConfigureTimerForRunTimeStats()
-#define portGET_RUN_TIME_COUNTER_VALUE() vGET_RUN_TIME_COUNTER_VALUE()
+#define configGENERATE_RUN_TIME_STATS           0
+#define configUSE_TRACE_FACILITY                0
+#define configUSE_STATS_FORMATTING_FUNCTIONS    0
 
 /* Software timer related definitions. */
 #define configUSE_TIMERS                        1
@@ -118,7 +113,7 @@ extern uint32_t vGET_RUN_TIME_COUNTER_VALUE( void );
 #define INCLUDE_vTaskSuspend                    1
 #define INCLUDE_xResumeFromISR                  0
 #define INCLUDE_vTaskDelayUntil                 1
-#define INCLUDE_vTaskDelay                      1
+#define INCLUDE_vTaskDelay                      0
 #define INCLUDE_xTaskGetSchedulerState          0
 #define INCLUDE_xTaskGetCurrentTaskHandle       0
 #define INCLUDE_uxTaskGetStackHighWaterMark     0

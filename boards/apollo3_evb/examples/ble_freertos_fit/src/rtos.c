@@ -67,23 +67,6 @@
 //*****************************************************************************
 TaskHandle_t xSetupTask;
 
-
-static am_hal_ctimer_config_t g_cTimer =
-{
-    // Don't link timers.
-    1,
-
-    // Set up TimerA.
-    (AM_HAL_CTIMER_FN_REPEAT |
-     AM_HAL_CTIMER_INT_ENABLE    |
-     AM_HAL_CTIMER_HFRC_12MHZ),
-
-    // Set up TimerB.
-    (AM_HAL_CTIMER_FN_REPEAT |
-     AM_HAL_CTIMER_INT_ENABLE    |
-     AM_HAL_CTIMER_HFRC_12MHZ),
-};
-
 //*****************************************************************************
 //
 // Interrupt handler for the CTIMER module.
@@ -181,7 +164,6 @@ vApplicationStackOverflowHook(TaskHandle_t pxTask, char *pcTaskName)
 void
 setup_task(void *pvParameters)
 {
-    char cbuffer[200];
     //
     // Print a debug message.
     //
@@ -198,26 +180,12 @@ setup_task(void *pvParameters)
     //
     xTaskCreate(RadioTask, "RadioTask", 512, 0, 3, &radio_task_handle);
     xTaskCreate(SensorTask, "SensorTask", 512, 0, 3, &sensor_task_handle);	
+    //
+    // The setup operations are complete, so suspend the setup task now.
+    //
+    vTaskSuspend(NULL);
 
-    while (1)
-    {
-		vTaskDelay(3000/portTICK_PERIOD_MS);
-		memset(cbuffer,0,200);
-		vTaskGetRunTimeStats(cbuffer);
-		am_util_debug_printf("\r\n%s\r\n",cbuffer);
-     }
-}
-
-
-void vConfigureTimerForRunTimeStats( void )
-{
-	am_hal_ctimer_clear(1, AM_HAL_CTIMER_BOTH);
-	am_hal_ctimer_config(1, &g_cTimer);
-	am_hal_ctimer_start(1, AM_HAL_CTIMER_BOTH);
-}
-uint32_t vGET_RUN_TIME_COUNTER_VALUE( void )
-{
-	return am_hal_ctimer_read(1, AM_HAL_CTIMER_BOTH);
+    while (1);
 }
 
 //*****************************************************************************
