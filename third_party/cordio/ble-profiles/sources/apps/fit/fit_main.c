@@ -118,7 +118,7 @@ static const appUpdateCfg_t fitUpdateCfg =
   3000,                                      /*! Connection idle period in ms before attempting
                                               connection parameter update; set to zero to disable */
   6,                                    /*! Minimum connection interval in 1.25ms units */
-  6,                                    /*! Maximum connection interval in 1.25ms units */
+  12,                                    /*! Maximum connection interval in 1.25ms units */
   4,                                      /*! Connection latency */
   600,                                    /*! Supervision timeout in 10ms units */
   5                                       /*! Number of update attempts before giving up */
