@@ -371,8 +371,6 @@ void fitSendNotification(uint16_t valueLen, uint8_t *pValue)
 	}
 }
 
-static uint8_t s_ui8Data[40];
-static uint8_t s_ui8Cnt = 0;
 /*************************************************************************************************/
 /*!
  *  \brief  Process CCC state change.
@@ -389,20 +387,11 @@ static void fitProcCccState(fitMsg_t *pMsg)
 	/* handle heart rate measurement CCC */
 	if (pMsg->ccc.idx == FIT_HRS_HRM_CCC_IDX)
 	{
-#if 0
 		if (pMsg->ccc.value == ATT_CLIENT_CFG_NOTIFY)
 			Start_SensorTimer();
 		else
 			Stop_SensorTimer();
-#else
-		if (pMsg->ccc.value == ATT_CLIENT_CFG_NOTIFY)
-		{
-			s_ui8Data[0] = 0xA5;
-			s_ui8Data[1] = s_ui8Cnt++;
-			s_ui8Data[39] = s_ui8Cnt;
-			fitSendNotification(40, s_ui8Data);
-		}
-#endif
+
 		return;
 	}
 
@@ -634,24 +623,8 @@ static void fitProcMsg(fitMsg_t *pMsg)
 			{
 				if (AttsCccEnabled(psEvt->hdr.param, FIT_HRS_HRM_CCC_IDX))
 				{
-#if 1
 					am_hal_gpio_state_write(10, AM_HAL_GPIO_OUTPUT_TOGGLE);
 					xTaskNotify( sensor_task_handle, (1<<1),eSetBits);
-#else
-					{
-						static uint32_t mycount = 0;
-						if(mycount++%2)
-						{
-							s_ui8Data[0] = 0xA5;
-							s_ui8Data[1] = s_ui8Cnt++;
-							s_ui8Data[39] = s_ui8Cnt;
-							am_hal_gpio_state_write(10, AM_HAL_GPIO_OUTPUT_TOGGLE);
-							AttsHandleValueNtf(psEvt->hdr.param, HRS_HRM_HDL, 40, s_ui8Data);
-						}
-						else
-							AttsHandleValueNtf(psEvt->hdr.param, HRS_HRM_HDL, 40, s_ui8Data);//Dummy
-					}
-#endif
 				}
 				else
 				{

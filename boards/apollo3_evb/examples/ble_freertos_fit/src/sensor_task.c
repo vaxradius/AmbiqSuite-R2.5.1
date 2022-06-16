@@ -71,12 +71,16 @@ static am_hal_ctimer_config_t g_sTimer =
 
 static uint8_t s_ui8Data[40];
 static uint8_t s_ui8Cnt = 0;
+static uint16_t miss_count = 0;
+static TickType_t xTicks = 0;
+static TickType_t xTicksDelta = 0;
 
 static void
 Ctimer_handler(void)
 {
 	BaseType_t xHigherPriorityTaskWoken;
 	xHigherPriorityTaskWoken = pdFALSE;
+      //am_util_delay_us(45); //Assume SPI needs 45us to get raw data 
 	xTaskNotifyFromISR( sensor_task_handle, 
                                (1<<0),
                                eSetBits,
@@ -96,7 +100,7 @@ init_Ctimer(void)
 	am_hal_ctimer_config(0, &g_sTimer);
 
 	//HFRC_3MHZ 1500 is 0.5ms 
-	ui32Period = (1500 * 15); //7.5ms
+	ui32Period = (1500 * 2); //1ms
 	am_hal_ctimer_period_set(0, AM_HAL_CTIMER_TIMERA, ui32Period,
 	                         (ui32Period>>1));
 
@@ -138,6 +142,10 @@ SensorTaskSetup(void)
 
 void Start_SensorTimer(void)
 {
+	s_ui8Cnt = 0;
+	miss_count = 0;
+	xTicks = 0;
+	xTicksDelta = 0;
 	//
 	// Stop timer A0. Just in case host died without sending STOP last time
 	//
@@ -146,6 +154,11 @@ void Start_SensorTimer(void)
 	// Start timer A0
 	//
 	am_hal_ctimer_start(0, AM_HAL_CTIMER_TIMERA);
+	s_ui8Data[0] = 0xA5;
+	s_ui8Data[1] = s_ui8Cnt++;
+	s_ui8Data[2] = 0;
+	s_ui8Data[39] = s_ui8Cnt;
+	fitSendNotification(40, s_ui8Data);
 }
 
 void Stop_SensorTimer(void)
@@ -162,9 +175,7 @@ void
 SensorTask(void *pvParameters)
 {
 	uint32_t NotificationValue = 0;
-	uint16_t miss_count = 0;
-	TickType_t xTicks = 0;
-	TickType_t xTicksDelta = 0;
+
 	for(;;)
 	{
 		xTaskNotifyWait(
@@ -176,20 +187,21 @@ SensorTask(void *pvParameters)
 		{
 			xTicksDelta = (xTaskGetTickCount() - xTicks);
 
-			am_hal_gpio_state_write(9, AM_HAL_GPIO_OUTPUT_TOGGLE);
+			//am_hal_gpio_state_write(9, AM_HAL_GPIO_OUTPUT_TOGGLE);
 
-			if(xTicksDelta/portTICK_PERIOD_MS > 8)
+			if(xTicksDelta/portTICK_PERIOD_MS > 9)
 			{
 				miss_count ++;
 			}
 			
-			if(xTicksDelta/portTICK_PERIOD_MS > 1)
+			if(xTicksDelta/portTICK_PERIOD_MS > 5)
 			{
 				s_ui8Data[0] = 0xA5;
 				s_ui8Data[1] = s_ui8Cnt++;
-				s_ui8Data[2] = 0;
+				s_ui8Data[2] = xTicksDelta;
 				s_ui8Data[39] = s_ui8Cnt;
 				fitSendNotification(40, s_ui8Data);
+				xTicks = xTaskGetTickCount();
 			}
 			else
 			{
@@ -198,11 +210,13 @@ SensorTask(void *pvParameters)
 				s_ui8Data[2] = (uint8_t)miss_count;
 				fitSendNotification(40, s_ui8Data);
 			}
-
-			xTicks = xTaskGetTickCount();
 		}
 
-		//if(NotificationValue & (1<<0)) // From Ctimer handler
-		//	am_hal_gpio_state_write(9, AM_HAL_GPIO_OUTPUT_TOGGLE);
+		if(NotificationValue & (1<<0)) // From Ctimer handler
+		{
+			am_hal_gpio_state_write(9, AM_HAL_GPIO_OUTPUT_CLEAR);
+			//am_util_delay_us(500); //Assume fusion algrithm needs 500us per 1ms raw data 
+			am_hal_gpio_state_write(9, AM_HAL_GPIO_OUTPUT_SET);
+		}
 	}
 }
