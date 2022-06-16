@@ -80,7 +80,7 @@ Ctimer_handler(void)
 {
 	BaseType_t xHigherPriorityTaskWoken;
 	xHigherPriorityTaskWoken = pdFALSE;
-      am_util_delay_us(45); //Assume SPI needs 45us to get raw data 
+      //am_util_delay_us(45); //Assume SPI needs 45us to get raw data 
 	xTaskNotifyFromISR( sensor_task_handle, 
                                (1<<0),
                                eSetBits,
@@ -119,7 +119,7 @@ init_Ctimer(void)
 	// Enable the timer interrupt in the NVIC.
 	//
 	NVIC_EnableIRQ(CTIMER_IRQn);
-	NVIC_SetPriority(CTIMER_IRQn, NVIC_configMAX_SYSCALL_INTERRUPT_PRIORITY);
+	NVIC_SetPriority(CTIMER_IRQn, (NVIC_configMAX_SYSCALL_INTERRUPT_PRIORITY+1)); //NVIC_SetPriority(BLE_IRQn, NVIC_configMAX_SYSCALL_INTERRUPT_PRIORITY);
 }
 
 //*****************************************************************************
@@ -173,12 +173,12 @@ void Handle_ATTS_HANDLE_VALUE_CNF_Event(void)
 
 	//am_hal_gpio_state_write(9, AM_HAL_GPIO_OUTPUT_TOGGLE);
 
-	if(xTicksDelta/portTICK_PERIOD_MS > 9)
+	if(xTicksDelta/portTICK_PERIOD_MS > 14)
 	{
 		miss_count ++;
 	}
 	
-	if(xTicksDelta/portTICK_PERIOD_MS > 5)
+	if(xTicksDelta/portTICK_PERIOD_MS > 2)
 	{
 		s_ui8Data[0] = 0xA5;
 		s_ui8Data[1] = s_ui8Cnt++;
@@ -220,6 +220,7 @@ SensorTask(void *pvParameters)
 		if(NotificationValue & (1<<0)) // From Ctimer handler
 		{
 			am_hal_gpio_state_write(9, AM_HAL_GPIO_OUTPUT_CLEAR);
+			am_util_delay_us(45); //Assume SPI needs 45us to get raw data 
 			am_util_delay_us(454); //Assume fusion algorithm needs 454us per  raw data 
 			am_hal_gpio_state_write(9, AM_HAL_GPIO_OUTPUT_SET);
 		}
