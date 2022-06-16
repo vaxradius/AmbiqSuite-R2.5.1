@@ -166,6 +166,37 @@ void Stop_SensorTimer(void)
 	am_hal_ctimer_stop(0, AM_HAL_CTIMER_TIMERA);
 }
 
+
+void Handle_ATTS_HANDLE_VALUE_CNF_Event(void)
+{
+	xTicksDelta = (xTaskGetTickCount() - xTicks);
+
+	//am_hal_gpio_state_write(9, AM_HAL_GPIO_OUTPUT_TOGGLE);
+
+	if(xTicksDelta/portTICK_PERIOD_MS > 9)
+	{
+		miss_count ++;
+	}
+	
+	if(xTicksDelta/portTICK_PERIOD_MS > 5)
+	{
+		s_ui8Data[0] = 0xA5;
+		s_ui8Data[1] = s_ui8Cnt++;
+		s_ui8Data[2] = xTicksDelta;
+		s_ui8Data[39] = s_ui8Cnt;
+		fitSendNotification(40, s_ui8Data);
+		xTicks = xTaskGetTickCount();
+	}
+	else
+	{
+		s_ui8Data[0] = 0xFF;
+		s_ui8Data[1] = (uint8_t)(miss_count >> 8);
+		s_ui8Data[2] = (uint8_t)miss_count;
+		fitSendNotification(40, s_ui8Data);
+	}
+}
+
+
 //*****************************************************************************
 //
 // Short Description.
@@ -184,33 +215,7 @@ SensorTask(void *pvParameters)
                                 &NotificationValue, /* Receives the notification value. */
                                 portMAX_DELAY );    /* Block indefinitely. */
 		if(NotificationValue & (1<<1))//From ATTS_HANDLE_VALUE_CNF
-		{
-			xTicksDelta = (xTaskGetTickCount() - xTicks);
-
-			//am_hal_gpio_state_write(9, AM_HAL_GPIO_OUTPUT_TOGGLE);
-
-			if(xTicksDelta/portTICK_PERIOD_MS > 9)
-			{
-				miss_count ++;
-			}
-			
-			if(xTicksDelta/portTICK_PERIOD_MS > 5)
-			{
-				s_ui8Data[0] = 0xA5;
-				s_ui8Data[1] = s_ui8Cnt++;
-				s_ui8Data[2] = xTicksDelta;
-				s_ui8Data[39] = s_ui8Cnt;
-				fitSendNotification(40, s_ui8Data);
-				xTicks = xTaskGetTickCount();
-			}
-			else
-			{
-				s_ui8Data[0] = 0x5A;
-				s_ui8Data[1] = (uint8_t)(miss_count >> 8);
-				s_ui8Data[2] = (uint8_t)miss_count;
-				fitSendNotification(40, s_ui8Data);
-			}
-		}
+			Handle_ATTS_HANDLE_VALUE_CNF_Event();
 
 		if(NotificationValue & (1<<0)) // From Ctimer handler
 		{
