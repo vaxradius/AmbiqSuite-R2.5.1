@@ -80,7 +80,7 @@ Ctimer_handler(void)
 {
 	BaseType_t xHigherPriorityTaskWoken;
 	xHigherPriorityTaskWoken = pdFALSE;
-      //am_util_delay_us(45); //Assume SPI needs 45us to get raw data 
+      am_util_delay_us(45); //Assume SPI needs 45us to get raw data 
 	xTaskNotifyFromISR( sensor_task_handle, 
                                (1<<0),
                                eSetBits,
@@ -99,8 +99,8 @@ init_Ctimer(void)
 	am_hal_ctimer_clear(0, AM_HAL_CTIMER_TIMERA);
 	am_hal_ctimer_config(0, &g_sTimer);
 
-	//HFRC_3MHZ 1500 is 0.5ms 
-	ui32Period = (1500 * 2); //1ms
+	//HFRC_3MHZ 3 is 1us 
+	ui32Period = (3*988); // 988us
 	am_hal_ctimer_period_set(0, AM_HAL_CTIMER_TIMERA, ui32Period,
 	                         (ui32Period>>1));
 
@@ -215,7 +215,7 @@ SensorTask(void *pvParameters)
 		if(NotificationValue & (1<<0)) // From Ctimer handler
 		{
 			am_hal_gpio_state_write(9, AM_HAL_GPIO_OUTPUT_CLEAR);
-			//am_util_delay_us(500); //Assume fusion algrithm needs 500us per 1ms raw data 
+			am_util_delay_us(454); //Assume fusion algorithm needs 454us per  raw data 
 			am_hal_gpio_state_write(9, AM_HAL_GPIO_OUTPUT_SET);
 		}
 	}
