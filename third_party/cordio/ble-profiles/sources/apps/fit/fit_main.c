@@ -623,7 +623,6 @@ static void fitProcMsg(fitMsg_t *pMsg)
 			{
 				if (AttsCccEnabled(psEvt->hdr.param, FIT_HRS_HRM_CCC_IDX))
 				{
-					am_hal_gpio_state_write(10, AM_HAL_GPIO_OUTPUT_TOGGLE);
 #if 0					
 					xTaskNotify( sensor_task_handle, (1<<1),eSetBits);
 #else

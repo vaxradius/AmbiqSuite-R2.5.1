@@ -134,6 +134,8 @@ SensorTaskSetup(void)
 
 	am_hal_gpio_state_write(9, AM_HAL_GPIO_OUTPUT_SET); 
 	am_hal_gpio_pinconfig(9, g_AM_HAL_GPIO_OUTPUT);
+	am_hal_gpio_state_write(8, AM_HAL_GPIO_OUTPUT_SET); 
+	am_hal_gpio_pinconfig(8, g_AM_HAL_GPIO_OUTPUT);
 	
 	init_Ctimer();
 
@@ -171,7 +173,7 @@ void Handle_ATTS_HANDLE_VALUE_CNF_Event(void)
 {
 	xTicksDelta = (xTaskGetTickCount() - xTicks);
 
-	//am_hal_gpio_state_write(9, AM_HAL_GPIO_OUTPUT_TOGGLE);
+	am_hal_gpio_state_write(8, AM_HAL_GPIO_OUTPUT_SET); 
 
 	if(xTicksDelta/portTICK_PERIOD_MS > 14)
 	{
@@ -194,6 +196,7 @@ void Handle_ATTS_HANDLE_VALUE_CNF_Event(void)
 		s_ui8Data[2] = (uint8_t)miss_count;
 		fitSendNotification(40, s_ui8Data);
 	}
+	am_hal_gpio_state_write(8, AM_HAL_GPIO_OUTPUT_CLEAR);
 }
 
 
@@ -209,20 +212,20 @@ SensorTask(void *pvParameters)
 
 	for(;;)
 	{
+		am_hal_gpio_state_write(9, AM_HAL_GPIO_OUTPUT_CLEAR);
 		xTaskNotifyWait(
                                 0x00,               /* Don't clear any bits on entry. */
                                 0xffffffffUL,          /* Clear all bits on exit. */
                                 &NotificationValue, /* Receives the notification value. */
                                 portMAX_DELAY );    /* Block indefinitely. */
+		am_hal_gpio_state_write(9, AM_HAL_GPIO_OUTPUT_SET);
 		if(NotificationValue & (1<<1))//From ATTS_HANDLE_VALUE_CNF
 			Handle_ATTS_HANDLE_VALUE_CNF_Event();
 
 		if(NotificationValue & (1<<0)) // From Ctimer handler
 		{
-			am_hal_gpio_state_write(9, AM_HAL_GPIO_OUTPUT_CLEAR);
 			am_util_delay_us(45); //Assume SPI needs 45us to get raw data 
-			am_util_delay_us(454); //Assume fusion algorithm needs 454us per  raw data 
-			am_hal_gpio_state_write(9, AM_HAL_GPIO_OUTPUT_SET);
+			am_util_delay_us(654); //Assume fusion algorithm needs 454us per  raw data	
 		}
 	}
 }

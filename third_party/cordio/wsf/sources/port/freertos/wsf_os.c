@@ -34,6 +34,8 @@
 #include "wsf_msg.h"
 #include "wsf_cs.h"
 
+#include "am_mcu_apollo.h"
+
 /**************************************************************************************************
   Compile time assert checks
 **************************************************************************************************/
@@ -368,6 +370,8 @@ void wsfOsDispatcher(void)
   wsfHandlerId_t    handlerId;
   uint8_t           i;
 
+  am_hal_gpio_state_write(10, AM_HAL_GPIO_OUTPUT_SET);
+
   WSF_CS_INIT(cs);
 
   pTask = &wsfOs.task;
@@ -422,11 +426,14 @@ void wsfOsDispatcher(void)
   }
 
   WsfTimerUpdateTicks();
+  am_hal_gpio_state_write(10, AM_HAL_GPIO_OUTPUT_CLEAR);
 
   if (wsfOsReadyToSleep())
   {
-    xEventGroupWaitBits(xRadioTaskEventObject, 1, pdTRUE,
+	am_hal_gpio_state_write(10, AM_HAL_GPIO_OUTPUT_CLEAR);
+	xEventGroupWaitBits(xRadioTaskEventObject, 1, pdTRUE,
                       pdFALSE, portMAX_DELAY);
+	am_hal_gpio_state_write(10, AM_HAL_GPIO_OUTPUT_SET);
   }
 
 }
