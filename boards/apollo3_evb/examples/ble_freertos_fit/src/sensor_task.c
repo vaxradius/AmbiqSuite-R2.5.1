@@ -181,23 +181,16 @@ void Handle_ATTS_HANDLE_VALUE_CNF_Event(void)
 	{
 		miss_count ++;
 	}
-	
-	if(xTicksDelta/portTICK_PERIOD_MS > 2)
-	{
-		s_ui8Data[0] = 0xA5;
-		s_ui8Data[1] = s_ui8Cnt++;
-		s_ui8Data[2] = xTicksDelta;
-		s_ui8Data[39] = s_ui8Cnt;
-		fitSendNotification(40, s_ui8Data);
-		xTicks = xTaskGetTickCount();
-	}
-	else
-	{
-		s_ui8Data[0] = 0xFF;
-		s_ui8Data[1] = (uint8_t)(miss_count >> 8);
-		s_ui8Data[2] = (uint8_t)miss_count;
-		fitSendNotification(40, s_ui8Data);
-	}
+
+	s_ui8Data[0] = 0xA5;
+	s_ui8Data[1] = s_ui8Cnt++;
+	s_ui8Data[2] = xTicksDelta;
+	s_ui8Data[3] = (uint8_t)(miss_count >> 8);
+	s_ui8Data[4] = (uint8_t)miss_count;
+	s_ui8Data[39] = s_ui8Cnt;
+	fitSendNotification(40, s_ui8Data);
+	xTicks = xTaskGetTickCount();
+
 	am_hal_gpio_state_write(8, AM_HAL_GPIO_OUTPUT_CLEAR);
 }
 
@@ -227,7 +220,7 @@ SensorTask(void *pvParameters)
 		if(NotificationValue & (1<<0)) // From Ctimer handler
 		{
 			am_util_delay_us(45); //Assume SPI needs 45us to get raw data 
-			am_util_delay_us(654); //Assume fusion algorithm needs 654us per  raw data	
+			am_util_delay_us(654); //Assume fusion algorithm needs 454us per  raw data	
 		}
 	}
 }
