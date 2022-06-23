@@ -370,7 +370,7 @@ void wsfOsDispatcher(void)
   wsfHandlerId_t    handlerId;
   uint8_t           i;
 
-  am_hal_gpio_state_write(10, AM_HAL_GPIO_OUTPUT_SET);
+  am_hal_gpio_state_write(49, AM_HAL_GPIO_OUTPUT_SET);
 
   WSF_CS_INIT(cs);
 
@@ -426,14 +426,14 @@ void wsfOsDispatcher(void)
   }
 
   WsfTimerUpdateTicks();
-  am_hal_gpio_state_write(10, AM_HAL_GPIO_OUTPUT_CLEAR);
+  am_hal_gpio_state_write(49, AM_HAL_GPIO_OUTPUT_CLEAR);
 
   if (wsfOsReadyToSleep())
   {
-	am_hal_gpio_state_write(10, AM_HAL_GPIO_OUTPUT_CLEAR);
+	am_hal_gpio_state_write(49, AM_HAL_GPIO_OUTPUT_CLEAR);
 	xEventGroupWaitBits(xRadioTaskEventObject, 1, pdTRUE,
                       pdFALSE, portMAX_DELAY);
-	am_hal_gpio_state_write(10, AM_HAL_GPIO_OUTPUT_SET);
+	am_hal_gpio_state_write(49, AM_HAL_GPIO_OUTPUT_SET);
   }
 
 }

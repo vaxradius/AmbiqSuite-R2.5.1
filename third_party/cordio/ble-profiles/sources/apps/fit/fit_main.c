@@ -917,6 +917,4 @@ void FitStart(void)
 
   /* Reset the device */
   DmDevReset();
-  am_hal_gpio_state_write(10, AM_HAL_GPIO_OUTPUT_SET);
-  am_hal_gpio_pinconfig(10, g_AM_HAL_GPIO_OUTPUT);
 }

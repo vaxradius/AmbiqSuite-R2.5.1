@@ -136,6 +136,8 @@ SensorTaskSetup(void)
 	am_hal_gpio_pinconfig(9, g_AM_HAL_GPIO_OUTPUT);
 	am_hal_gpio_state_write(8, AM_HAL_GPIO_OUTPUT_SET); 
 	am_hal_gpio_pinconfig(8, g_AM_HAL_GPIO_OUTPUT);
+	am_hal_gpio_state_write(49, AM_HAL_GPIO_OUTPUT_SET);
+	am_hal_gpio_pinconfig(49, g_AM_HAL_GPIO_OUTPUT);
 	
 	init_Ctimer();
 
@@ -225,7 +227,7 @@ SensorTask(void *pvParameters)
 		if(NotificationValue & (1<<0)) // From Ctimer handler
 		{
 			am_util_delay_us(45); //Assume SPI needs 45us to get raw data 
-			am_util_delay_us(654); //Assume fusion algorithm needs 454us per  raw data	
+			am_util_delay_us(654); //Assume fusion algorithm needs 654us per  raw data	
 		}
 	}
 }

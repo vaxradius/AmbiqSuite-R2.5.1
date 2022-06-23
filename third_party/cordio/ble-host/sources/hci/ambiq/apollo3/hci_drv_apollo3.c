@@ -371,7 +371,7 @@ HciDrvRadioBoot(bool bColdBoot)
     am_hal_debug_gpio_pinconfig(BLE_DEBUG_TRACE_08);
 #endif
 
-    am_hal_gpio_pinconfig(11, g_AM_HAL_GPIO_OUTPUT);
+    am_hal_gpio_pinconfig(48, g_AM_HAL_GPIO_OUTPUT);
 
 #endif // AM_DEBUG_BLE_TIMING
 
@@ -722,7 +722,7 @@ void
 HciDrvIntService(void)
 {
 #if AM_DEBUG_BLE_TIMING
-    am_hal_gpio_state_write(11, AM_HAL_GPIO_OUTPUT_SET);
+    am_hal_gpio_state_write(48, AM_HAL_GPIO_OUTPUT_SET);
 #endif
 
     //
@@ -807,7 +807,7 @@ HciDrvIntService(void)
 #endif
 
 #if AM_DEBUG_BLE_TIMING
-    am_hal_gpio_state_write(11, AM_HAL_GPIO_OUTPUT_CLEAR);
+    am_hal_gpio_state_write(48, AM_HAL_GPIO_OUTPUT_CLEAR);
 #endif
 
 }
