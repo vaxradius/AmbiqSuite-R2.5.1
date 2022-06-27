@@ -1368,7 +1368,12 @@ HciVscCarrierWaveMode(uint8_t txchannel)
 void
 HciDrvBleSleepSet(bool enable)
 {
-    am_hal_ble_sleep_set(BLE, enable);
+    uint8_t SleepCmd_En[8]={0xFC,0x67,0x80,0x50,0x00,0x00,0x00,0x00};
+    uint8_t SleepCmd_Dis[8]={0xFC,0x67,0x80,0x50,0x51,0x39,0x45,0x68};  
+    if(enable)
+       HciVendorSpecificCmd(0xFD03, 8, SleepCmd_En);
+    else
+        HciVendorSpecificCmd(0xFD03, 8, SleepCmd_Dis);
 }
 
 //*****************************************************************************

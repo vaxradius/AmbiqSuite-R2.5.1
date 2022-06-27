@@ -150,6 +150,7 @@ void Start_SensorTimer(void)
 	miss_count = 0;
 	xTicks = 0;
 	xTicksDelta = 0;
+	HciDrvBleSleepSet(false); //param  enable 'true' set sleep enable, 'false' set sleep disable
 	//
 	// Stop timer A0. Just in case host died without sending STOP last time
 	//
@@ -168,6 +169,7 @@ void Start_SensorTimer(void)
 void Stop_SensorTimer(void)
 {
 	am_hal_ctimer_stop(0, AM_HAL_CTIMER_TIMERA);
+	HciDrvBleSleepSet(true);//param  enable 'true' set sleep enable, 'false' set sleep disable
 }
 
 
