@@ -91,11 +91,10 @@ prime_number(int32_t i32n)
 // Short Description.
 //
 //*****************************************************************************
-
+uint32_t UIaTask_uicount = 0;
 void UIaTask(void *pvParameters)
 {
 	const TickType_t xUIDelayms = pdMS_TO_TICKS(8UL); //delay 8ms 
-	uint32_t uicount = 0;
 	uint32_t errcount = 0;
 	TickType_t xLastWakeTime = xTaskGetTickCount();
 	while (1)
@@ -103,15 +102,15 @@ void UIaTask(void *pvParameters)
 		vTaskDelayUntil(&xLastWakeTime, xUIDelayms);
 		if(prime_number(100) != 25)
 			errcount++;
-		if(++uicount % 200 == 0)
-			am_util_debug_printf("UITask_A(%d), err=%d\r\n", uicount,errcount);
+		if(++UIaTask_uicount % 500 == 0)
+			am_util_debug_printf("UITask_A(%d), err=%d\r\n", UIaTask_uicount,errcount);
 	}
 }
 
+uint32_t UIbTask_uicount = 0;
 void UIbTask(void *pvParameters)
 {
 	const TickType_t xUIDelayms = pdMS_TO_TICKS(5UL); //delay 5ms 
-	uint32_t uicount = 0;
 	uint32_t errcount = 0;
 	TickType_t xLastWakeTime = xTaskGetTickCount();
 	while (1)
@@ -119,8 +118,8 @@ void UIbTask(void *pvParameters)
 		vTaskDelayUntil(&xLastWakeTime, xUIDelayms);
 		if(prime_number(100) != 25)
 			errcount++;
-		if(++uicount % 200 == 0)
-			am_util_debug_printf("UITask_B(%d), err=%d\r\n", uicount,errcount);
+		if(++UIbTask_uicount % 500 == 0)
+			am_util_debug_printf("UITask_B(%d), err=%d\r\n", UIbTask_uicount,errcount);
 	}
 }
 

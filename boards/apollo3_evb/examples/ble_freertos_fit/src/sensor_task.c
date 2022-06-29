@@ -42,6 +42,11 @@
 //
 //*****************************************************************************
 #include "ble_freertos_fit.h"
+/* FreeRTOS includes. */
+#include "FreeRTOS.h"
+#include "task.h"
+#include "timers.h"
+#include "stack_macros.h"
 
 //*****************************************************************************
 //
@@ -202,10 +207,17 @@ void Handle_ATTS_HANDLE_VALUE_CNF_Event(void)
 // Short Description.
 //
 //*****************************************************************************
+uint32_t SensorTask_uicount = 0;
+extern uint32_t UIaTask_uicount;
+extern uint32_t UIbTask_uicount;
+uint32_t last_UIaTask_uicount = 0;
+uint32_t last_UIbTask_uicount = 0;
 void
 SensorTask(void *pvParameters)
 {
 	uint32_t NotificationValue = 0;
+    eTaskState UIaTask_st_task;
+    eTaskState UIbTask_st_task;
 
 	for(;;)
 	{
@@ -223,6 +235,33 @@ SensorTask(void *pvParameters)
 		{
 			am_util_delay_us(45); //Assume SPI needs 45us to get raw data 
 			am_util_delay_us(654); //Assume fusion algorithm needs 454us per  raw data	
+            if(++SensorTask_uicount % 5000 == 0)
+            {
+                if(last_UIaTask_uicount == UIaTask_uicount)
+                {
+                    #if 1 //resume UI_task
+                    UIaTask_st_task = eTaskGetState(UIa_task_handle);
+                    am_util_stdio_printf("UITask_A state = %d\n", UIaTask_st_task);
+                    #endif
+                    am_util_debug_printf("!!! SensorTask(%d), UITask_A error, keep (%d)\r\n", SensorTask_uicount, UIaTask_uicount);
+                }
+                else if(last_UIbTask_uicount == UIbTask_uicount)
+                {
+                    am_util_debug_printf("!!! SensorTask(%d), UITask_B error, keep (%d)\r\n", SensorTask_uicount, UIaTask_uicount);
+                    #if 1 //resume UI_task
+                    UIbTask_st_task = eTaskGetState(UIb_task_handle);
+                    am_util_stdio_printf("UITask_A state = %d\n", UIbTask_st_task);
+                    #endif                    
+                }
+                else
+                {
+                    am_util_debug_printf("SensorTask(%d), UITask_A(%d->%d), UITask_B(%d->%d)\r\n", 
+                        SensorTask_uicount, last_UIaTask_uicount, UIaTask_uicount, last_UIbTask_uicount, UIbTask_uicount);
+                }
+                last_UIaTask_uicount = UIaTask_uicount;
+                last_UIbTask_uicount = UIbTask_uicount;
+            }
+
 		}
 	}
 }
