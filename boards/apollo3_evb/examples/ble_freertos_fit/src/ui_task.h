@@ -51,8 +51,10 @@
 // Radio task handle.
 //
 //*****************************************************************************
-extern TaskHandle_t UI_task_handle;
-void UIInit(void);
-void UITask(void *pvParameters);
+extern TaskHandle_t UIa_task_handle;
+extern TaskHandle_t UIb_task_handle;
+
+void UIaTask(void *pvParameters);
+void UIbTask(void *pvParameters);
 
 #endif // UI_TASK_H
