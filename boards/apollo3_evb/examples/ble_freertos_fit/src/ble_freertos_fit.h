@@ -86,5 +86,5 @@
 //*****************************************************************************
 #include "radio_task.h"
 #include "Sensor_task.h"
-
+#include "ui_task.h"
 #endif // FREERTOS_FIT_H

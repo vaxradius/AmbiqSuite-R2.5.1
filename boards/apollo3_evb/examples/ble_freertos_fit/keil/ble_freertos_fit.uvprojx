@@ -322,7 +322,7 @@
             <PlainCh>0</PlainCh>
             <Ropi>0</Ropi>
             <Rwpi>0</Rwpi>
-            <wLevel>2</wLevel>
+            <wLevel>1</wLevel>
             <uThumb>0</uThumb>
             <uSurpInc>0</uSurpInc>
             <uC99>1</uC99>
@@ -373,7 +373,7 @@
             <ScatterFile>.\ble_freertos_fit.sct</ScatterFile>
             <IncludeLibs></IncludeLibs>
             <IncludeLibsPath></IncludeLibsPath>
-            <Misc>../../../../../mcu/apollo3/hal/keil/bin/libam_hal.lib(am_hal_global.o) --keep=am_hal_global.o(.data) </Misc>
+            <Misc>../../../../../mcu/apollo3/hal/keil/bin/libam_hal.lib(am_hal_global.o) --keep=am_hal_global.o(.data)</Misc>
             <LinkerInputFile></LinkerInputFile>
             <DisabledWarnings></DisabledWarnings>
           </LDads>
@@ -772,6 +772,11 @@
               <FileName>sensor_task.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\src\sensor_task.c</FilePath>
+            </File>
+            <File>
+              <FileName>ui_task.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\src\ui_task.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -1402,6 +1407,21 @@
               <FileName>libam_hal.lib</FileName>
               <FileType>4</FileType>
               <FilePath>../../../../../mcu/apollo3/hal/keil/bin/libam_hal.lib</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>am_hal_ble</GroupName>
+          <Files>
+            <File>
+              <FileName>am_hal_ble.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\..\..\mcu\apollo3\hal\am_hal_ble.c</FilePath>
+            </File>
+            <File>
+              <FileName>am_hal_ble_patch_b0.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\..\..\mcu\apollo3\hal\am_hal_ble_patch_b0.c</FilePath>
             </File>
           </Files>
         </Group>
