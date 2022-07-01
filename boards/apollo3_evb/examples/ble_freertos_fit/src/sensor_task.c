@@ -137,12 +137,14 @@ SensorTaskSetup(void)
 {
 	am_util_debug_printf("SensorTask: setup\r\n");
 
-	am_hal_gpio_state_write(9, AM_HAL_GPIO_OUTPUT_SET); 
+	am_hal_gpio_state_write(9, AM_HAL_GPIO_OUTPUT_SET); //For tracking sensor task
 	am_hal_gpio_pinconfig(9, g_AM_HAL_GPIO_OUTPUT);
-	am_hal_gpio_state_write(8, AM_HAL_GPIO_OUTPUT_SET); 
+	am_hal_gpio_state_write(8, AM_HAL_GPIO_OUTPUT_SET); //For tracking ATTS_HANDLE_VALUE_CNF_Event
 	am_hal_gpio_pinconfig(8, g_AM_HAL_GPIO_OUTPUT);
-	am_hal_gpio_state_write(49, AM_HAL_GPIO_OUTPUT_SET);
+	am_hal_gpio_state_write(49, AM_HAL_GPIO_OUTPUT_SET);//For tracking radio task in wsf_os.c
 	am_hal_gpio_pinconfig(49, g_AM_HAL_GPIO_OUTPUT);
+	am_hal_gpio_state_write(47, AM_HAL_GPIO_OUTPUT_SET);//For tracking TickHandler
+	am_hal_gpio_pinconfig(47, g_AM_HAL_GPIO_OUTPUT);
 	
 	init_Ctimer();
 
@@ -212,6 +214,8 @@ extern uint32_t UIaTask_uicount;
 extern uint32_t UIbTask_uicount;
 uint32_t last_UIaTask_uicount = 0;
 uint32_t last_UIbTask_uicount = 0;
+extern uint32_t g_ERR014_0;
+extern uint32_t g_ERR014_1;
 void
 SensorTask(void *pvParameters)
 {
@@ -235,32 +239,23 @@ SensorTask(void *pvParameters)
 		{
 			am_util_delay_us(45); //Assume SPI needs 45us to get raw data 
 			am_util_delay_us(654); //Assume fusion algorithm needs 454us per  raw data	
-            if(++SensorTask_uicount % 5000 == 0)
-            {
-                if(last_UIaTask_uicount == UIaTask_uicount)
-                {
-                    #if 1 //resume UI_task
-                    UIaTask_st_task = eTaskGetState(UIa_task_handle);
-                    am_util_stdio_printf("UITask_A state = %d\n", UIaTask_st_task);
-                    #endif
-                    am_util_debug_printf("!!! SensorTask(%d), UITask_A error, keep (%d)\r\n", SensorTask_uicount, UIaTask_uicount);
-                }
-                else if(last_UIbTask_uicount == UIbTask_uicount)
-                {
-                    am_util_debug_printf("!!! SensorTask(%d), UITask_B error, keep (%d)\r\n", SensorTask_uicount, UIaTask_uicount);
-                    #if 1 //resume UI_task
-                    UIbTask_st_task = eTaskGetState(UIb_task_handle);
-                    am_util_stdio_printf("UITask_A state = %d\n", UIbTask_st_task);
-                    #endif                    
-                }
-                else
-                {
-                    am_util_debug_printf("SensorTask(%d), UITask_A(%d->%d), UITask_B(%d->%d)\r\n", 
-                        SensorTask_uicount, last_UIaTask_uicount, UIaTask_uicount, last_UIbTask_uicount, UIbTask_uicount);
-                }
-                last_UIaTask_uicount = UIaTask_uicount;
-                last_UIbTask_uicount = UIbTask_uicount;
-            }
+			if(++SensorTask_uicount % 5000 == 0)
+			{
+				am_util_debug_printf("SensorTask(%d), UITask_A(%d->%d), UITask_B(%d->%d)\n", 
+				SensorTask_uicount, last_UIaTask_uicount, UIaTask_uicount, last_UIbTask_uicount, UIbTask_uicount);
+
+				if(last_UIaTask_uicount == UIaTask_uicount)
+					am_util_debug_printf("!!! UITask_A error, keep (%d)\r\n", UIaTask_uicount);
+
+				if(last_UIbTask_uicount == UIbTask_uicount)
+					am_util_debug_printf("!!! UITask_B error, keep (%d)\r\n", UIbTask_uicount);
+				
+				last_UIaTask_uicount = UIaTask_uicount;
+				last_UIbTask_uicount = UIbTask_uicount;
+
+				am_util_debug_printf("ERR026 STTMR = 0x%08X, CMPR0 = 0x%08X, CMPR1 = 0x%08X\n", CTIMER->STTMR, AM_REGVAL(AM_REG_STIMER_COMPARE(0, 0)), AM_REGVAL(AM_REG_STIMER_COMPARE(0, 1)));
+				am_util_debug_printf("ERR014 CMPR0 = 0x%08X, CMPR1 = 0x%08X\n\n",g_ERR014_0, g_ERR014_0);
+			}
 
 		}
 	}

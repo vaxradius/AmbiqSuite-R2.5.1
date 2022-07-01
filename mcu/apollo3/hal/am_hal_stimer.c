@@ -178,6 +178,9 @@ am_hal_stimer_counter_clear(void)
 //! @return None.
 //
 //*****************************************************************************
+
+uint32_t g_ERR014_0 = 0;
+uint32_t g_ERR014_1 = 0;
 void
 am_hal_stimer_compare_delta_set(uint32_t ui32CmprInstance, uint32_t ui32Delta)
 {
@@ -237,6 +240,14 @@ am_hal_stimer_compare_delta_set(uint32_t ui32CmprInstance, uint32_t ui32Delta)
         {
             break;
         }
+	  else
+	  {
+		if(numTries>=3 && ui32CmprInstance == 0)
+			g_ERR014_0 = CTIMER->STTMR;
+		if(numTries>=3 && ui32CmprInstance == 1)
+			g_ERR014_1 = CTIMER->STTMR;
+		
+	  }
     }
 
 

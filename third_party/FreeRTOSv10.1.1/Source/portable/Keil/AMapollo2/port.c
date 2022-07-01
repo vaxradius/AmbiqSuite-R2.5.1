@@ -1139,7 +1139,7 @@ xPortStimerTickHandler(uint32_t delta)
 void
 am_stimer_cmpr0_isr(void)
 {
-
+    //am_hal_gpio_state_write(47, AM_HAL_GPIO_OUTPUT_TOGGLE);
     //
     // Check the timer interrupt status.
     //
@@ -1165,7 +1165,7 @@ uint32_t gNumCmpB = 0;
 void
 am_stimer_cmpr1_isr(void)
 {
-
+    //am_hal_gpio_state_write(47, AM_HAL_GPIO_OUTPUT_TOGGLE);
     //
     // Check the timer interrupt status.
     //

@@ -102,7 +102,7 @@ void UIaTask(void *pvParameters)
 		vTaskDelayUntil(&xLastWakeTime, xUIDelayms);
 		if(prime_number(100) != 25)
 			errcount++;
-		if(++UIaTask_uicount % 500 == 0)
+		if(++UIaTask_uicount % 500 == 0 && errcount)
 			am_util_debug_printf("UITask_A(%d), err=%d\r\n", UIaTask_uicount,errcount);
 	}
 }
@@ -118,7 +118,7 @@ void UIbTask(void *pvParameters)
 		vTaskDelayUntil(&xLastWakeTime, xUIDelayms);
 		if(prime_number(100) != 25)
 			errcount++;
-		if(++UIbTask_uicount % 500 == 0)
+		if(++UIbTask_uicount % 500 == 0 && errcount)
 			am_util_debug_printf("UITask_B(%d), err=%d\r\n", UIbTask_uicount,errcount);
 	}
 }

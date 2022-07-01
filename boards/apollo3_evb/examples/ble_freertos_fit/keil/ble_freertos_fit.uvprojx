@@ -1423,6 +1423,11 @@
               <FileType>1</FileType>
               <FilePath>..\..\..\..\..\mcu\apollo3\hal\am_hal_ble_patch_b0.c</FilePath>
             </File>
+            <File>
+              <FileName>am_hal_stimer.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\..\..\mcu\apollo3\hal\am_hal_stimer.c</FilePath>
+            </File>
           </Files>
         </Group>
       </Groups>
