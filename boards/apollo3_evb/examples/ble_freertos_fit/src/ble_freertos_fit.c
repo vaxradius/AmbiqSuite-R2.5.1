@@ -92,6 +92,8 @@ enable_print_interface(void)
 int
 main(void)
 {
+    am_hal_reset_status_t sStatus;
+    am_hal_reset_status_get(&sStatus);
     //
     // Set the clock frequency
     //
@@ -168,7 +170,7 @@ main(void)
     //
     // Initialize plotting interface.
     //
-    am_util_debug_printf("FreeRTOS Fit Example\n");
+    am_util_debug_printf("FreeRTOS Fit Example <<RST_STAT=0x%X>>\n", sStatus.eStatus);
 
     //
     // Run the application.
