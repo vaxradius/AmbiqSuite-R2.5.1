@@ -35,8 +35,6 @@
 #include "app_hw.h"
 #include "hrps_api.h"
 
-#include "am_mcu_apollo.h"
-
 /**************************************************************************************************
   Local Variables
 **************************************************************************************************/
@@ -439,8 +437,6 @@ void HrpsProcMsg(wsfMsgHdr_t *pMsg)
 uint8_t HrpsWriteCback(dmConnId_t connId, uint16_t handle, uint8_t operation,
                        uint16_t offset, uint16_t len, uint8_t *pValue, attsAttr_t *pAttr)
 {
-  HciDrvRadioShutdown();
-  am_hal_reset_control(AM_HAL_RESET_CONTROL_SWPOI, 0);
   if (*pValue == CH_HRCP_RESET_ENERGY_EXP)
   {
     /* reset energy expended */
