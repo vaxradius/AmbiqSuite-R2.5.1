@@ -39,7 +39,7 @@
 
 // A Possible clock glitch could rarely cause the Stimer interrupt to be lost.
 // Set up a backup comparator to handle this case
-//#define AM_FREERTOS_STIMER_BACKUP
+#define AM_FREERTOS_STIMER_BACKUP
 
 #if defined(AM_PART_APOLLO4) || defined(AM_PART_APOLLO4B)
 // FIXME!!!
