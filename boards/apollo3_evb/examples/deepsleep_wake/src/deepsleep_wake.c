@@ -169,6 +169,16 @@ main(void)
     // Enable the XT for the RTC.
     //
     am_hal_clkgen_control(AM_HAL_CLKGEN_CONTROL_XTAL_START, 0);
+    am_hal_clkgen_clkout_enable(true, AM_HAL_CLKGEN_CLKOUT_XTAL_32768);
+
+    const am_hal_gpio_pincfg_t AM_HAL_GPIO0_CLKOUT =
+    {
+	    .uFuncSel       = 2,
+	    .eDriveStrength = AM_HAL_GPIO_PIN_DRIVESTRENGTH_2MA,
+	    .eGPOutcfg      = AM_HAL_GPIO_PIN_OUTCFG_PUSHPULL
+    };
+    am_hal_gpio_pinconfig(0, AM_HAL_GPIO0_CLKOUT);
+    
 
     //
     // Select XT for RTC clock source
