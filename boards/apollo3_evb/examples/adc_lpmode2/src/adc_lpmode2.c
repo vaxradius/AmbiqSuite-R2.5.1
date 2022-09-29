@@ -69,11 +69,11 @@
 static void *g_ADCHandle;
 
 //
-// Define the ADC SE1 pin to be used.
+// Define the ADC SE2 pin to be used.
 //
-const am_hal_gpio_pincfg_t g_AM_PIN_29_ADCSE1 =
+const am_hal_gpio_pincfg_t g_AM_PIN_11_ADCSE2 =
 {
-    .uFuncSel       = AM_HAL_PIN_29_ADCSE1,
+    .uFuncSel       = AM_HAL_PIN_11_ADCSE2,
 };
 
 //*****************************************************************************
@@ -241,7 +241,7 @@ adc_config(void)
   //
   ADCSlotConfig.eMeasToAvg      = AM_HAL_ADC_SLOT_AVG_1;
   ADCSlotConfig.ePrecisionMode  = AM_HAL_ADC_SLOT_14BIT;
-  ADCSlotConfig.eChannel        = AM_HAL_ADC_SLOT_CHSEL_SE1;
+  ADCSlotConfig.eChannel        = AM_HAL_ADC_SLOT_CHSEL_SE2;
   ADCSlotConfig.bWindowCompare  = false;
   ADCSlotConfig.bEnabled        = true;
   if (AM_HAL_STATUS_SUCCESS != am_hal_adc_configure_slot(g_ADCHandle, 0, &ADCSlotConfig))
@@ -396,7 +396,7 @@ main(void)
   //
   // Set a pin to act as our ADC input
   //
-  am_hal_gpio_pinconfig(29, g_AM_PIN_29_ADCSE1);
+  am_hal_gpio_pinconfig(11, g_AM_PIN_11_ADCSE2);
 
   //
   // Start the timer-based ADC measurements.
