@@ -116,11 +116,12 @@ am_ctimer_isr(void)
 //
 //*****************************************************************************
 void
-am_adc_isr(void)
+polling_adc(void)
 {
   uint32_t            ui32IntMask;
   am_hal_adc_sample_t Sample;
-
+  while(1)
+  {
   //
   // Read the interrupt status.
   //
@@ -155,11 +156,12 @@ am_adc_isr(void)
     am_util_stdio_printf("ADC Slot =  %d\n", Sample.ui32Slot);
     am_util_stdio_printf("ADC Value = %8.8X\n", Sample.ui32Sample);
 #endif
+    break;
+  }
   }
 
-  adc_deconfig();
-
 }
+
 
 //*****************************************************************************
 //
@@ -399,7 +401,7 @@ main(void)
   //
   // Start the timer-based ADC measurements.
   //
-  init_timerA1_for_ADC();
+  //init_timerA1_for_ADC();
 
   //
   // Print the banner.
@@ -415,8 +417,8 @@ main(void)
   //
   // Enable interrupts.
   //
-  NVIC_EnableIRQ(ADC_IRQn);
-  NVIC_EnableIRQ(CTIMER_IRQn);
+  //NVIC_EnableIRQ(ADC_IRQn);
+  //NVIC_EnableIRQ(CTIMER_IRQn);
   am_hal_interrupt_master_enable();
 
   //
@@ -426,6 +428,33 @@ main(void)
   am_bsp_debug_printf_disable();
 #endif
 
+  while(1)
+  {
+
+
+	//
+	// Re-configure the ADC. We lose configuration data in the power-down, so
+	// we'll reconfigure the ADC here. If you don't shut down the ADC, this
+	// step is unnecessary.
+	//
+	adc_config();
+
+	//
+	// Trigger the ADC
+	//
+	am_hal_adc_sw_trigger(g_ADCHandle);
+
+
+	polling_adc();
+
+	adc_deconfig();
+
+
+	am_util_delay_ms(1000);
+
+		
+	
+  }
   //
   // Loop forever.
   //
