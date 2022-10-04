@@ -153,7 +153,7 @@ enum
 
 /* The input report fits in one byte */
 #define HIDAPP_KEYBOARD_INPUT_REPORT_LEN  8
-#define HIDAPP_MOUSE_INPUT_REPORT_LEN     3
+#define HIDAPP_MOUSE_INPUT_REPORT_LEN     4
 #define HIDAPP_REMOTE_INPUT_REPORT_LEN    1
 #define HIDAPP_OUTPUT_REPORT_LEN          1
 #define HIDAPP_FEATURE_REPORT_LEN         1
@@ -359,6 +359,12 @@ const uint8_t hidReportMap[] =
   0x15, 0x81,                    /*     LOGICAL_MINIMUM (-127) */
   0x25, 0x7f,                    /*     LOGICAL_MAXIMUM (127) */
   0x81, 0x06,                    /*     INPUT (Data, Variable, Relative) */
+0x09, 0x38, /*AB usage wheel*/
+0x15, 0x81, /* Logical Minimum (-127) */
+0x25, 0x7F, /* Logical Maximum (127) */
+0x75, 0x08, /* Report Size (8) */
+0x95, 0x03, /* Report Count (2) AB (3) */
+0x81, 0x06, /* Input (Data, Variable, Relative) */
   0xc0,                          /*   End Collection (Physical) */
   0xc0                           /* End Collection (Application) */
 };
@@ -393,6 +399,7 @@ struct
   uint8_t buttonMask;                   /* pending button mask */
   uint8_t xDisplacement;                /* pending X Displacement */
   uint8_t yDisplacement;                /* pending Y Displacement */
+  uint8_t scroll;
   uint8_t devSpecific;                  /* pending Device Specific */
 
   /* Keyboard pending event data */
@@ -548,6 +555,7 @@ static void hidAppMouseSendData(dmConnId_t connId)
         buffer[MOUSE_BUTTON_POS] = hidAppCb.buttonMask;
         buffer[MOUSE_X_POS] = hidAppCb.xDisplacement;
         buffer[MOUSE_Y_POS] = hidAppCb.yDisplacement;
+	  buffer[MOUSE_Y_POS+1] = hidAppCb.scroll;
 
         hidAppCb.txFlags &= ~(HIDAPP_TX_FLAGS_READY | HIDAPP_TX_FLAGS_PENDING);
 
@@ -758,7 +766,7 @@ static void hidAppKeyboardReportEvent(uint8_t modifiers, uint8_t keys[], uint8_t
  *  \return None.
  */
 /*************************************************************************************************/
-static void hidAppMouseReportEvent(uint8_t buttonMask, uint8_t xDisplacement, uint8_t yDisplacement)
+static void hidAppMouseReportEvent(uint8_t buttonMask, uint8_t xDisplacement, uint8_t yDisplacement, uint8_t scroll)
 {
   dmConnId_t connId;
 
@@ -768,6 +776,7 @@ static void hidAppMouseReportEvent(uint8_t buttonMask, uint8_t xDisplacement, ui
     hidAppCb.buttonMask = buttonMask;
     hidAppCb.xDisplacement = xDisplacement;
     hidAppCb.yDisplacement = yDisplacement;
+    hidAppCb.scroll= scroll;
     hidAppCb.devSpecific = 0;
     hidAppCb.reportId = HIDAPP_MOUSE_REPORT_ID;
 
@@ -876,10 +885,10 @@ static void hidAppTestSendButton(void)
     hidAppRemoteReportEvent(button);
     break;
   case HIDAPP_MOUSE_LEFT_BTN:
-    hidAppMouseReportEvent(MOUSE_BUTTON_LEFT, 0, 0);
+    hidAppMouseReportEvent(MOUSE_BUTTON_LEFT, 50, -50, 0);
     break;
   case HIDAPP_MOUSE_RIGHT_BTN:
-    hidAppMouseReportEvent(MOUSE_BUTTON_RIGHT, 0, 0);
+    hidAppMouseReportEvent(MOUSE_BUTTON_MIDDLE, 50, -50, 20);
     break;
   case HIDAPP_KEYBOARD_UP_BTN:
     button = KEYBOARD_USAGE_UP_ARROW;
@@ -931,7 +940,7 @@ static void hidAppTestNoButton(void)
 
   case HIDAPP_MOUSE_LEFT_BTN:
   case HIDAPP_MOUSE_RIGHT_BTN:
-    hidAppMouseReportEvent(MOUSE_USAGE_NONE, 0, 0);
+    hidAppMouseReportEvent(MOUSE_USAGE_NONE, 0, 0, 0);
     break;
 
   case HIDAPP_KEYBOARD_UP_BTN:
