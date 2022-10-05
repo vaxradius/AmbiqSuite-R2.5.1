@@ -363,7 +363,7 @@ const uint8_t hidReportMap[] =
 0x15, 0x81, /* Logical Minimum (-127) */
 0x25, 0x7F, /* Logical Maximum (127) */
 0x75, 0x08, /* Report Size (8) */
-0x95, 0x03, /* Report Count (2) AB (3) */
+0x95, 0x01, /* Report Count (2) AB (3) */
 0x81, 0x06, /* Input (Data, Variable, Relative) */
   0xc0,                          /*   End Collection (Physical) */
   0xc0                           /* End Collection (Application) */
@@ -811,16 +811,16 @@ static void hidAppTestCycleButton(void)
   switch(hidAppCb.testBtnState)
   {
   case HIDAPP_REMOTE_PLAY_PAUSE_BTN:
-    APP_TRACE_INFO0("HidApp Test Button: Remote Play/Pause");
+    APP_TRACE_INFO0("hidAppMouseReportEvent(0, -50, -50, 0)");
     break;
   case HIDAPP_REMOTE_SCAN_NEXT_BTN:
-    APP_TRACE_INFO0("HidApp Test Button: Remote Scan Next");
+    APP_TRACE_INFO0("hidAppMouseReportEvent(0, 50, 50, 0)");
     break;
   case HIDAPP_REMOTE_SCAN_PREVIOUS_BTN:
-    APP_TRACE_INFO0("HidApp Test Button: Remote Scan Previous");
+    APP_TRACE_INFO0("hidAppMouseReportEvent(0, 0, 0, 100);");
     break;
   case HIDAPP_REMOTE_VOLUME_DOWN_BTN:
-    APP_TRACE_INFO0("HidApp Test Button: Remote Volume Down");
+    APP_TRACE_INFO0("hidAppMouseReportEvent(0, 0, 0, -100);");
     break;
   case HIDAPP_REMOTE_VOLUME_UP_BTN:
     APP_TRACE_INFO0("HidApp Test Button: Remote Volume Up");
@@ -865,30 +865,26 @@ static void hidAppTestSendButton(void)
   switch(hidAppCb.testBtnState)
   {
   case HIDAPP_REMOTE_PLAY_PAUSE_BTN:
-    button = REMOTE_PLAY_PAUSE;
-    hidAppRemoteReportEvent(button);
+    hidAppMouseReportEvent(0, -50, -50, 0);
     break;
   case HIDAPP_REMOTE_SCAN_NEXT_BTN:
-    button = REMOTE_SCAN_NEXT;
-    hidAppRemoteReportEvent(button);
+    hidAppMouseReportEvent(0, 50, 50, 0);
     break;
   case HIDAPP_REMOTE_SCAN_PREVIOUS_BTN:
-    button = REMOTE_SCAN_PREVIOUS;
-    hidAppRemoteReportEvent(button);
+    hidAppMouseReportEvent(0, 0, 0, 100);
     break;
   case HIDAPP_REMOTE_VOLUME_DOWN_BTN:
-    button = REMOTE_VOLUME_DOWN;
-    hidAppRemoteReportEvent(button);
+    hidAppMouseReportEvent(0, 0, 0, -100);
     break;
   case HIDAPP_REMOTE_VOLUME_UP_BTN:
     button = REMOTE_VOLUME_UP;
     hidAppRemoteReportEvent(button);
     break;
   case HIDAPP_MOUSE_LEFT_BTN:
-    hidAppMouseReportEvent(MOUSE_BUTTON_LEFT, 50, -50, 0);
+    hidAppMouseReportEvent(MOUSE_BUTTON_LEFT, 0, 0, 0);
     break;
   case HIDAPP_MOUSE_RIGHT_BTN:
-    hidAppMouseReportEvent(MOUSE_BUTTON_MIDDLE, 50, -50, 20);
+    hidAppMouseReportEvent(0, 50, 50, 0);
     break;
   case HIDAPP_KEYBOARD_UP_BTN:
     button = KEYBOARD_USAGE_UP_ARROW;
