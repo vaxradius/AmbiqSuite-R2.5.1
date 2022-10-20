@@ -368,6 +368,8 @@ amdtps_conn_close(dmEvt_t *pMsg)
 
 }
 
+uint8_t temp;
+
 uint8_t
 amdtps_write_cback(dmConnId_t connId, uint16_t handle, uint8_t operation,
                    uint16_t offset, uint16_t len, uint8_t *pValue, attsAttr_t *pAttr)
@@ -400,6 +402,7 @@ amdtps_write_cback(dmConnId_t connId, uint16_t handle, uint8_t operation,
     else if (handle == AMDTPS_ACK_HDL)
     {
         status = AmdtpReceivePkt(&amdtpsCb.core, &amdtpsCb.core.ackPkt, len, pValue);
+	 temp = *pValue;
     }
 
     if (status == AMDTP_STATUS_RECEIVE_DONE)
@@ -418,6 +421,31 @@ amdtps_write_cback(dmConnId_t connId, uint16_t handle, uint8_t operation,
 
     return ATT_SUCCESS;
 }
+
+uint8_t
+amdtps_read_cback(dmConnId_t connId, uint16_t handle, uint8_t operation,
+                      uint16_t offset, attsAttr_t *pAttr)
+{
+    switch (handle)
+    {
+        case AMDTPS_ACK_HDL:
+            pAttr->pValue[0] = temp;
+            break;
+        case AMDTPS_RX_HDL:
+
+            break;
+        case AMDTPS_TX_HDL:
+        {
+
+        }
+        break;
+        default:      
+            break;
+    }
+
+    return ATT_SUCCESS;
+}
+
 
 void
 amdtps_start(dmConnId_t connId, uint8_t timerEvt, uint8_t amdtpCccIdx)

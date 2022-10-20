@@ -110,7 +110,7 @@ static const uint16_t amdtpLenTxChCcc = sizeof(amdtpTxChCcc);
 
 /* AMDTP RX ack data */
 /* Note these are dummy values */
-static const uint8_t amdtpAck[] = {0};
+static uint8_t amdtpAck[] = {0};
 static const uint16_t amdtpLenAck = sizeof(amdtpAck);
 
 /* Proprietary data client characteristic configuration */
@@ -182,7 +182,7 @@ static const attsAttr_t amdtpList[] =
     (uint8_t *) amdtpAck,
     (uint16_t *) &amdtpLenAck,
     ATT_VALUE_MAX_LEN,
-    (ATTS_SET_UUID_128 | ATTS_SET_VARIABLE_LEN | ATTS_SET_WRITE_CBACK),
+    (ATTS_SET_UUID_128 | ATTS_SET_VARIABLE_LEN | ATTS_SET_WRITE_CBACK | ATTS_SET_READ_CBACK),
     ATTS_PERMIT_WRITE | ATTS_PERMIT_READ,
   },
   {

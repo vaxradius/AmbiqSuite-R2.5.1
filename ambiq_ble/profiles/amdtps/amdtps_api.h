@@ -92,6 +92,9 @@ void amdtps_init(wsfHandlerId_t handlerId, AmdtpsCfg_t *pCfg, amdtpRecvCback_t r
 
 void amdtps_proc_msg(wsfMsgHdr_t *pMsg);
 
+uint8_t amdtps_read_cback(dmConnId_t connId, uint16_t handle, uint8_t operation,
+                      uint16_t offset, attsAttr_t *pAttr);
+
 uint8_t amdtps_write_cback(dmConnId_t connId, uint16_t handle, uint8_t operation,
                        uint16_t offset, uint16_t len, uint8_t *pValue, attsAttr_t *pAttr);
 

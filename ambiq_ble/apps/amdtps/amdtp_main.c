@@ -835,7 +835,7 @@ void AmdtpStart(void)
   SvcCoreGattCbackRegister(GattReadCback, GattWriteCback);
   SvcCoreAddGroup();
   SvcDisAddGroup();
-  SvcAmdtpsCbackRegister(NULL, amdtps_write_cback);
+  SvcAmdtpsCbackRegister(amdtps_read_cback, amdtps_write_cback);
   SvcAmdtpsAddGroup();
 
   /* Set Service Changed CCCD index. */
