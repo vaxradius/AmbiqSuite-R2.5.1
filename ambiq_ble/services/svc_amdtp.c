@@ -83,7 +83,7 @@ static const uint8_t amdtpSvc[] = {ATT_UUID_AMDTP_SERVICE};
 static const uint16_t amdtpLenSvc = sizeof(amdtpSvc);
 
 /* AMDTP RX characteristic */ 
-static const uint8_t amdtpRxCh[] = {ATT_PROP_WRITE_NO_RSP, UINT16_TO_BYTES(AMDTPS_RX_HDL), ATT_UUID_AMDTP_RX};
+static const uint8_t amdtpRxCh[] = {ATT_PROP_WRITE_NO_RSP | ATT_PROP_READ , UINT16_TO_BYTES(AMDTPS_RX_HDL), ATT_UUID_AMDTP_RX};
 static const uint16_t amdtpLenRxCh = sizeof(amdtpRxCh);
 
 /* AMDTP TX characteristic */ 
@@ -91,7 +91,7 @@ static const uint8_t amdtpTxCh[] = {ATT_PROP_NOTIFY, UINT16_TO_BYTES(AMDTPS_TX_H
 static const uint16_t amdtpLenTxCh = sizeof(amdtpTxCh);
 
 /* AMDTP RX ack characteristic */ 
-static const uint8_t amdtpAckCh[] = {(ATT_PROP_WRITE_NO_RSP | ATT_PROP_NOTIFY), UINT16_TO_BYTES(AMDTPS_ACK_HDL), ATT_UUID_AMDTP_ACK};
+static const uint8_t amdtpAckCh[] = {(ATT_PROP_WRITE_NO_RSP | ATT_PROP_NOTIFY | ATT_PROP_READ), UINT16_TO_BYTES(AMDTPS_ACK_HDL), ATT_UUID_AMDTP_ACK};
 static const uint16_t amdtpLenAckCh = sizeof(amdtpAckCh);
 
 /* AMDTP RX data */
@@ -143,7 +143,7 @@ static const attsAttr_t amdtpList[] =
     (uint16_t *) &amdtpLenRx,
     ATT_VALUE_MAX_LEN,
     (ATTS_SET_UUID_128 | ATTS_SET_VARIABLE_LEN | ATTS_SET_WRITE_CBACK),
-    ATTS_PERMIT_WRITE
+    ATTS_PERMIT_WRITE | ATTS_PERMIT_READ
   },
   {
     attChUuid,
@@ -183,7 +183,7 @@ static const attsAttr_t amdtpList[] =
     (uint16_t *) &amdtpLenAck,
     ATT_VALUE_MAX_LEN,
     (ATTS_SET_UUID_128 | ATTS_SET_VARIABLE_LEN | ATTS_SET_WRITE_CBACK),
-    ATTS_PERMIT_WRITE,
+    ATTS_PERMIT_WRITE | ATTS_PERMIT_READ,
   },
   {
     attCliChCfgUuid,
