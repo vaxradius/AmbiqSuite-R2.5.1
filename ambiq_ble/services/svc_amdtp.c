@@ -91,7 +91,7 @@ static const uint8_t amdtpTxCh[] = {ATT_PROP_NOTIFY, UINT16_TO_BYTES(AMDTPS_TX_H
 static const uint16_t amdtpLenTxCh = sizeof(amdtpTxCh);
 
 /* AMDTP RX ack characteristic */ 
-static const uint8_t amdtpAckCh[] = {(ATT_PROP_WRITE_NO_RSP | ATT_PROP_NOTIFY | ATT_PROP_READ), UINT16_TO_BYTES(AMDTPS_ACK_HDL), ATT_UUID_AMDTP_ACK};
+static const uint8_t amdtpAckCh[] = {(ATT_PROP_WRITE | ATT_PROP_NOTIFY | ATT_PROP_READ), UINT16_TO_BYTES(AMDTPS_ACK_HDL), ATT_UUID_AMDTP_ACK};
 static const uint16_t amdtpLenAckCh = sizeof(amdtpAckCh);
 
 /* AMDTP RX data */
