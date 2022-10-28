@@ -82,6 +82,9 @@
 #include "hci_apollo_config.h"
 
 #include "wsf_msg.h"
+#include "am_mcu_apollo.h"
+#include "am_bsp.h"
+#include "am_util.h"
 
 //*****************************************************************************
 //
@@ -160,6 +163,13 @@ static wsfBufPoolDesc_t g_psPoolDescriptors[WSF_BUF_POOLS] =
 
 void radio_timer_handler(void);
 
+extern TimerHandle_t xWsfTimer;
+const am_hal_gpio_pincfg_t g_deepsleep_button2 =
+{
+    .uFuncSel = 3,
+    .eIntDir = AM_HAL_GPIO_PIN_INTDIR_LO2HI,
+    .eGPInput = AM_HAL_GPIO_PIN_INPUT_ENABLE,
+};
 
 
 //*****************************************************************************
@@ -187,14 +197,40 @@ button_handler(wsfEventMask_t event, wsfMsgHdr_t *pMsg)
         //
         if ( am_devices_button_released(am_bsp_psButtons[0]) )
         {
-            am_util_debug_printf("Got Button 0 Press\n");
-            AppUiBtnTest(APP_UI_BTN_1_SHORT);
+		am_util_debug_printf("Got Button 0 Press\n");
+		//if ( ble_on == false )
+		//	xTimerStart(xWsfTimer,1 / portTICK_PERIOD_MS);
+		WsfTimerStartSec(&PowerCycleTimer, 1);
+
+		//
+		// Configure the button pin.
+		//
+		am_hal_gpio_pinconfig(11, g_deepsleep_button2);
+		//
+		// Clear the GPIO Interrupt (write to clear).
+		//
+		AM_HAL_GPIO_MASKCREATE(GpioIntMask);
+		am_hal_gpio_interrupt_clear(AM_HAL_GPIO_MASKBIT(pGpioIntMask, 11));
+		//
+		am_hal_gpio_interrupt_enable(AM_HAL_GPIO_MASKBIT(pGpioIntMask, 11));
+
+
+		//
+		// Enable GPIO interrupts to the NVIC.
+		//
+		NVIC_EnableIRQ(GPIO_IRQn);
+		NVIC_SetPriority(GPIO_IRQn, NVIC_configMAX_SYSCALL_INTERRUPT_PRIORITY);
+
+
+
+		//AppUiBtnTest(APP_UI_BTN_1_SHORT);
         }
 
         if ( am_devices_button_released(am_bsp_psButtons[1]) )
         {
             am_util_debug_printf("Got Button 1 Press\n");
-            AppUiBtnTest(APP_UI_BTN_1_SHORT);
+	      
+            //AppUiBtnTest(APP_UI_BTN_1_SHORT);
         }
 
         if ( am_devices_button_released(am_bsp_psButtons[2]) )
@@ -211,22 +247,26 @@ button_handler(wsfEventMask_t event, wsfMsgHdr_t *pMsg)
         {
             dmConnId_t  connId;
 
-            WsfTimerStartSec(&PowerCycleTimer, 1);
+            
 
             if ((connId = AppConnIsOpen()) != DM_CONN_ID_NONE)
             {
                 AppConnClose(connId);
+		   WsfTimerStartSec(&PowerCycleTimer, 1);
                 return;
             }
 
             if ( AppSlaveIsAdvertising() == true )
             {
                 AppAdvStop();
+		   WsfTimerStartSec(&PowerCycleTimer, 1);
                 return;
             }
             am_util_debug_printf("Power off Apollo3 BLE controller\n");
             HciDrvRadioShutdown();
+	      //xTimerDelete(xWsfTimer,1 / portTICK_PERIOD_MS);
             ble_on = false;
+		  vTaskSuspend(radio_task_handle);
         }
         else
         {
@@ -234,9 +274,48 @@ button_handler(wsfEventMask_t event, wsfMsgHdr_t *pMsg)
             HciDrvRadioBoot(1);
             DmDevReset();
             ble_on = true;
-            WsfTimerStartSec(&PowerCycleTimer, 10);
+            //WsfTimerStartSec(&PowerCycleTimer, 10);
         }
     }
+}
+
+
+//*****************************************************************************
+//
+// GPIO ISR
+//
+//*****************************************************************************
+void
+am_gpio_isr(void)
+{
+	//
+	// Delay for debounce.
+	//
+	am_util_delay_ms(200);
+
+
+	uint64_t ui64Status;
+
+	am_hal_gpio_interrupt_status_get(false, &ui64Status);
+	am_hal_gpio_interrupt_clear(ui64Status);
+
+	
+	WsfTimerStartSec(&PowerCycleTimer, 1);
+
+	if(ble_on = false)
+	{
+		BaseType_t xYieldRequired;
+
+	     // Resume the suspended task.
+	     xYieldRequired = xTaskResumeFromISR( radio_task_handle );
+
+	     // We should switch context so the ISR returns to a different task.
+	     // NOTE:  How this is done depends on the port you are using.  Check
+	     // the documentation and examples for your port.
+	     portYIELD_FROM_ISR( xYieldRequired );
+	}
+
+
 }
 
 //*****************************************************************************
@@ -267,7 +346,7 @@ setup_buttons(void)
     PowerCycleTimer.handlerId = ButtonHandlerId;
     PowerCycleTimer.msg.event = POWERCYCLE_TIMER_EVENT;
 
-    WsfTimerStartSec(&PowerCycleTimer, 4);
+	    //WsfTimerStartSec(&PowerCycleTimer, 10);
 
 }
 
