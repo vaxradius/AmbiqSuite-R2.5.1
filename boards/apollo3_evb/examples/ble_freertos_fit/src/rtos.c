@@ -173,15 +173,15 @@ setup_task(void *pvParameters)
     // Run setup functions.
     //
     RadioTaskSetup();
-    SensorTaskSetup();
+    //SensorTaskSetup();
 
     //
     // Create the functional tasks
     //
 	xTaskCreate(RadioTask, "RadioTask", 512, 0, configMAX_PRIORITIES-1, &radio_task_handle);
-	xTaskCreate(SensorTask, "SensorTask", 512, 0, configMAX_PRIORITIES-2, &sensor_task_handle);	
-	xTaskCreate(UIaTask,     "UIaTask",     512, 0, configMAX_PRIORITIES-3, &UIa_task_handle);
-	xTaskCreate(UIbTask,     "UIbTask",     512, 0, configMAX_PRIORITIES-6, &UIb_task_handle);
+	//xTaskCreate(SensorTask, "SensorTask", 512, 0, configMAX_PRIORITIES-2, &sensor_task_handle);	
+	//xTaskCreate(UIaTask,     "UIaTask",     512, 0, configMAX_PRIORITIES-3, &UIa_task_handle);
+	//xTaskCreate(UIbTask,     "UIbTask",     512, 0, configMAX_PRIORITIES-6, &UIb_task_handle);
     //
     // The setup operations are complete, so suspend the setup task now.
     //

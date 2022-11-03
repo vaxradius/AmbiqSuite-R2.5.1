@@ -119,13 +119,21 @@ main(void)
     //
     // Configure the board for low power.
     //
-    //am_bsp_low_power_init();
+    am_bsp_low_power_init();
+
+am_devices_led_init(am_bsp_psLEDs);
+
+    //
+    // Turn the LEDs off.
+    //
+    am_devices_led_off(am_bsp_psLEDs, 0);
+    am_devices_led_off(am_bsp_psLEDs, 1);
 
     //
     // Turn off unneeded Flash & SRAM
     //
 #if defined(AM_PART_APOLLO3)
-    am_hal_pwrctrl_memory_enable(AM_HAL_PWRCTRL_MEM_SRAM_96K);
+    am_hal_pwrctrl_memory_enable(AM_HAL_PWRCTRL_MEM_SRAM_64K_DTCM);
 #endif
 #if defined(AM_PART_APOLLO3P)
     am_hal_pwrctrl_memory_enable(AM_HAL_PWRCTRL_MEM_SRAM_128K);
@@ -164,7 +172,7 @@ main(void)
     // Enable printing to the console.
     //
 #ifdef AM_DEBUG_PRINTF
-    enable_print_interface();
+    //enable_print_interface();
 #endif
 
     //

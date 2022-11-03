@@ -100,6 +100,17 @@ TaskHandle_t radio_task_handle;
 
 //*****************************************************************************
 //
+// Timer for power cycle BLE.
+//
+//*****************************************************************************
+bool ble_on = false;
+wsfHandlerId_t WsfTimerHandlerId;
+wsfTimer_t PowerCycleTimer;
+#define POWERCYCLE_TIMER_EVENT 0xA1
+
+void WsfTimer_Handler(wsfEventMask_t event, wsfMsgHdr_t *pMsg);
+//*****************************************************************************
+//
 // Function prototypes
 //
 //*****************************************************************************
@@ -138,6 +149,128 @@ static wsfBufPoolDesc_t g_psPoolDescriptors[WSF_BUF_POOLS] =
 //*****************************************************************************
 
 void radio_timer_handler(void);
+
+
+//*****************************************************************************
+//
+// GPIO ISR
+//
+//*****************************************************************************
+void
+am_gpio_isr(void)
+{
+	//
+	// Delay for debounce.
+	//
+	am_util_delay_ms(200);
+
+
+	uint64_t ui64Status;
+
+	am_hal_gpio_interrupt_status_get(false, &ui64Status);
+	am_hal_gpio_interrupt_clear(ui64Status);
+
+	
+	WsfTimerStartSec(&PowerCycleTimer, 1);
+
+	if(ble_on == false)
+	{
+		BaseType_t xYieldRequired;
+		
+	     // Resume the suspended task.
+	     xYieldRequired = xTaskResumeFromISR( radio_task_handle );
+
+	     // We should switch context so the ISR returns to a different task.
+	     // NOTE:  How this is done depends on the port you are using.  Check
+	     // the documentation and examples for your port.
+	     portYIELD_FROM_ISR( xYieldRequired );
+	}
+
+}
+
+
+void WsfTimer_Handler(wsfEventMask_t event, wsfMsgHdr_t *pMsg)
+{
+	if (pMsg->event == POWERCYCLE_TIMER_EVENT)
+	{
+		// restart timer
+		if ( ble_on == true )
+		{
+			dmConnId_t  connId;
+			if ((connId = AppConnIsOpen()) != DM_CONN_ID_NONE)
+			{
+				AppConnClose(connId);
+				am_util_debug_printf("AppConnClose\n");
+				WsfTimerStartSec(&PowerCycleTimer, 1);
+				return;
+			}
+
+			if ( AppSlaveIsAdvertising() == true )
+			{
+				AppAdvStop();
+				am_util_debug_printf("AppAdvStop\n");
+				WsfTimerStartSec(&PowerCycleTimer, 1);
+				return;
+			}
+			am_util_debug_printf("Power off Apollo3 BLE controller\n");
+			HciDrvRadioShutdown();
+			ble_on = false;
+			vTaskSuspend(radio_task_handle);
+		}
+		else
+		{
+			am_util_debug_printf("Power on Apollo3 BLE controller\n");
+			HciDrvRadioBoot(1);
+			DmDevReset();
+			ble_on = true;
+		}
+	}
+}
+
+void
+btnNwsftimer_init(void)
+{
+	am_hal_gpio_pincfg_t btnConfig =
+	{
+	    .uFuncSel = 3,
+	    .eIntDir = AM_HAL_GPIO_PIN_INTDIR_LO2HI,
+	    .eGPInput = AM_HAL_GPIO_PIN_INPUT_ENABLE,
+	};
+
+	//
+	// Enable the buttons for user interaction.
+	//
+	am_devices_button_array_init(am_bsp_psButtons, AM_BSP_NUM_BUTTONS);
+	am_devices_button_array_tick(am_bsp_psButtons, AM_BSP_NUM_BUTTONS);
+	
+
+	//
+	// Configure the button pin.
+	//
+	am_hal_gpio_pinconfig(16, btnConfig);
+	//
+	// Clear the GPIO Interrupt (write to clear).
+	//
+	AM_HAL_GPIO_MASKCREATE(GpioIntMask);
+	am_hal_gpio_interrupt_clear(AM_HAL_GPIO_MASKBIT(pGpioIntMask, 16));
+	am_hal_gpio_interrupt_enable(AM_HAL_GPIO_MASKBIT(pGpioIntMask, 16));
+
+
+	//
+	// Enable GPIO interrupts to the NVIC.
+	//
+	NVIC_EnableIRQ(GPIO_IRQn);
+	NVIC_SetPriority(GPIO_IRQn, NVIC_configMAX_SYSCALL_INTERRUPT_PRIORITY);
+
+
+
+       //
+	// PowerCycle Wsf timer.
+	//
+	PowerCycleTimer.handlerId = WsfTimerHandlerId;
+	PowerCycleTimer.msg.event = POWERCYCLE_TIMER_EVENT;
+
+}
 
 
 
@@ -215,6 +348,8 @@ exactle_stack_init(void)
 
     handlerId = WsfOsSetNextHandler(FitHandler);
     FitHandlerInit(handlerId);
+
+    WsfTimerHandlerId = WsfOsSetNextHandler(WsfTimer_Handler);
 
     handlerId = WsfOsSetNextHandler(HciDrvHandler);
     HciDrvHandlerInit(handlerId);
@@ -296,11 +431,17 @@ RadioTask(void *pvParameters)
     //     HciVscSetCustom_BDAddr(&bd_addr);
     // }
 
+	//
+	// Prep the button & timer for use
+	//
+	btnNwsftimer_init();
 
-    //
-    // Start the "Fit" profile.
-    //
-    FitStart();
+	//
+	// Start the "Fit" profile.
+	//
+	FitStart();
+
+	ble_on = true;
 
     while (1)
     {

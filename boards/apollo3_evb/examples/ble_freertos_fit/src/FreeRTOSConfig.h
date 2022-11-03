@@ -148,8 +148,8 @@ extern void am_freertos_wakeup(uint32_t);
 #endif
 
 #ifdef AM_FREERTOS_USE_STIMER_FOR_TICK
-#define configSTIMER_CLOCK_HZ                     187500//32768
-#define configSTIMER_CLOCK                        AM_HAL_STIMER_HFRC_187_5KHZ//AM_HAL_STIMER_XTAL_32KHZ
+#define configSTIMER_CLOCK_HZ				32768//187500
+#define configSTIMER_CLOCK 					AM_HAL_STIMER_XTAL_32KHZ//AM_HAL_STIMER_HFRC_187_5KHZ
 #else // Use CTimer
 #define configCTIMER_NUM                          3
 #define configCTIMER_CLOCK_HZ                     32768
