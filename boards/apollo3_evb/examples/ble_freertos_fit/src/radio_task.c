@@ -171,7 +171,7 @@ am_gpio_isr(void)
 	am_hal_gpio_interrupt_clear(ui64Status);
 
 	
-	WsfTimerStartSec(&PowerCycleTimer, 1);
+	WsfTimerStartMs(&PowerCycleTimer, 10);
 
 	if(ble_on == false)
 	{
@@ -201,7 +201,7 @@ void WsfTimer_Handler(wsfEventMask_t event, wsfMsgHdr_t *pMsg)
 			{
 				AppConnClose(connId);
 				am_util_debug_printf("AppConnClose\n");
-				WsfTimerStartSec(&PowerCycleTimer, 1);
+				WsfTimerStartMs(&PowerCycleTimer, 10);
 				return;
 			}
 
@@ -209,7 +209,7 @@ void WsfTimer_Handler(wsfEventMask_t event, wsfMsgHdr_t *pMsg)
 			{
 				AppAdvStop();
 				am_util_debug_printf("AppAdvStop\n");
-				WsfTimerStartSec(&PowerCycleTimer, 1);
+				WsfTimerStartMs(&PowerCycleTimer, 10);
 				return;
 			}
 			am_util_debug_printf("Power off Apollo3 BLE controller\n");
