@@ -125,13 +125,13 @@ static const appSecCfg_t amotaSecCfg =
 /*! configurable parameters for AMOTA connection parameter update */
 static appUpdateCfg_t otaUpdateCfg =
 {
-    0,                                /*! Connection idle period in ms before attempting
+  3000,                                      /*! Connection idle period in ms before attempting
                                               connection parameter update; set to zero to disable */
-    (15 / 1.25),                         /*! 15 ms */
-    (30 / 1.25),                         /*! 30 ms */
-    0,                                   /*! Connection latency */
-    (6000 / 10),                         /*! Supervision timeout in 10ms units */
-    5                                    /*! Number of update attempts before giving up */
+  6,                                    /*! Minimum connection interval in 1.25ms units */
+  12,                                    /*! Maximum connection interval in 1.25ms units */
+  4,                                      /*! Connection latency */
+  600,                                    /*! Supervision timeout in 10ms units */
+  5                                       /*! Number of update attempts before giving up */
 };
 
 /*! AMOTAS configuration */
@@ -463,7 +463,7 @@ static void amotaProcMsg(amotaMsg_t *pMsg)
             break;
 
         case ATT_MTU_UPDATE_IND:
-          APP_TRACE_INFO1("Negotiated MTU %d", ((attEvt_t *)pMsg)->mtu);
+          APP_TRACE_INFO1("<<Negotiated MTU %d>>", ((attEvt_t *)pMsg)->mtu);
             break;
 
         case DM_RESET_CMPL_IND:
@@ -490,6 +490,21 @@ static void amotaProcMsg(amotaMsg_t *pMsg)
             break;
 
         case DM_CONN_OPEN_IND:
+		APP_TRACE_INFO0("<<DM_CONN_OPEN_IND>>");
+		APP_TRACE_INFO1(" connId        = %d", ((dmEvt_t*)pMsg)->hdr.param);
+		APP_TRACE_INFO1(" handle        = %d", ((dmEvt_t*)pMsg)->connOpen.handle);
+		APP_TRACE_INFO1(" role          = %d", ((dmEvt_t*)pMsg)->connOpen.role);
+		APP_TRACE_INFO3(" addrMSB       = %02X:%02X:%02X", \
+					          ((dmEvt_t*)pMsg)->connOpen.peerAddr[0], \
+					          ((dmEvt_t*)pMsg)->connOpen.peerAddr[1], \
+					          ((dmEvt_t*)pMsg)->connOpen.peerAddr[2]);
+		APP_TRACE_INFO3(" addrLSB       = %02X:%02X:%02X", \
+					          ((dmEvt_t*)pMsg)->connOpen.peerAddr[3], \
+					          ((dmEvt_t*)pMsg)->connOpen.peerAddr[4], \
+					          ((dmEvt_t*)pMsg)->connOpen.peerAddr[5]);
+		APP_TRACE_INFO1(" connInterval  = %d", ((dmEvt_t*)pMsg)->connOpen.connInterval);
+		APP_TRACE_INFO1(" connLatency   = %d", ((dmEvt_t*)pMsg)->connOpen.connLatency);
+		APP_TRACE_INFO1(" supTimeout    = %d", ((dmEvt_t*)pMsg)->connOpen.supTimeout);
             amotas_proc_msg(&pMsg->hdr);
             uiEvent = APP_UI_CONN_OPEN;
             break;
@@ -505,8 +520,25 @@ static void amotaProcMsg(amotaMsg_t *pMsg)
         break;
 
         case DM_CONN_UPDATE_IND:
+	      APP_TRACE_INFO0("<<DM_CONN_UPDATE_IND>>");
+	      APP_TRACE_INFO1(" connId        = %d", ((dmEvt_t*)pMsg)->hdr.param);
+	      APP_TRACE_INFO1(" handle        = %d", ((dmEvt_t*)pMsg)->connUpdate.handle);
+	      APP_TRACE_INFO1(" connInterval  = %d", ((dmEvt_t*)pMsg)->connUpdate.connInterval);
+	      APP_TRACE_INFO1(" connLatency   = %d", ((dmEvt_t*)pMsg)->connUpdate.connLatency);
+	      APP_TRACE_INFO1(" supTimeout    = %d", ((dmEvt_t*)pMsg)->connUpdate.supTimeout);
             amotas_proc_msg(&pMsg->hdr);
         break;
+	case DM_CONN_DATA_LEN_CHANGE_IND:
+		APP_TRACE_INFO0("<<DM_CONN_DATA_LEN_CHANGE_IND>>");
+		APP_TRACE_INFO1(" connId        = %d", ((dmEvt_t*)pMsg)->hdr.param);
+		APP_TRACE_INFO1(" handle        = %d", ((dmEvt_t*)pMsg)->dataLenChange.handle);
+		APP_TRACE_INFO1(" Tx            = %d", ((dmEvt_t*)pMsg)->dataLenChange.maxTxOctets);
+		APP_TRACE_INFO1(" Rx            = %d", ((dmEvt_t*)pMsg)->dataLenChange.maxRxOctets);      
+	break;
+
+	case DM_PHY_UPDATE_IND:
+		APP_TRACE_INFO3("<<DM_PHY_UPDATE_IND>> status: %d, RX: %d, TX: %d", pMsg->dm.phyUpdate.status,pMsg->dm.phyUpdate.rxPhy, pMsg->dm.phyUpdate.txPhy);
+	break;
 
         case DM_SEC_PAIR_CMPL_IND:
             DmSecGenerateEccKeyReq();

@@ -69,7 +69,7 @@
 
 #include "amota_profile_config.h"
 #include "am_multi_boot.h"
-
+#if 0
 #undef  APP_TRACE_INFO0
 #undef  APP_TRACE_INFO1
 #undef  APP_TRACE_INFO2
@@ -79,7 +79,7 @@
 #define APP_TRACE_INFO1(msg, var1)
 #define APP_TRACE_INFO2(msg, var1, var2)
 #define APP_TRACE_INFO3(msg, var1, var2, var3)
-
+#endif
 static am_multiboot_flash_info_t *g_pFlash = &g_intFlash;
 
 #if defined(AM_PART_APOLLO3) || defined(AM_PART_APOLLO3P)
@@ -970,7 +970,11 @@ amotas_write_cback(dmConnId_t connId, uint16_t handle, uint8_t operation,
 {
     uint8_t dataIdx = 0;
     uint32_t calDataCrc = 0;
-#if 0
+    static uint32_t count = 0;
+	
+#if 1
+APP_TRACE_INFO2("%d/%d\t",len,count+=len);
+#else
     uint16_t i = 0;
     APP_TRACE_INFO0("============= data arrived start ===============");
     for (i = 0; i < len; i++)
