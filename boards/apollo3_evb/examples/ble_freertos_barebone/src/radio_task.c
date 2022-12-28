@@ -136,11 +136,80 @@ static wsfBufPoolDesc_t g_psPoolDescriptors[WSF_BUF_POOLS] =
 
 //*****************************************************************************
 //
+// Timer for buttons.
+//
+//*****************************************************************************
+wsfHandlerId_t g_ButtonHandlerId;
+wsfTimer_t     g_ButtonTimer;
+
+//*****************************************************************************
+//
 // Tracking variable for the scheduler timer.
 //
 //*****************************************************************************
 
 void radio_timer_handler(void);
+
+//*****************************************************************************
+//
+// Poll the buttons.
+//
+//*****************************************************************************
+void
+button_handler(wsfEventMask_t event, wsfMsgHdr_t *pMsg)
+{
+    //
+    // Restart the button timer.
+    //
+    WsfTimerStartMs(&g_ButtonTimer, 10);
+
+    //
+    // Every time we get a button timer tick, check all of our buttons.
+    //
+    am_devices_button_array_tick(am_bsp_psButtons, AM_BSP_NUM_BUTTONS);
+
+    //
+    // If we got a a press, do something with it.
+    //
+    if ( am_devices_button_released(am_bsp_psButtons[0]) )
+    {
+        am_util_debug_printf("Got Button 1 Press\n");
+        AppUiBtnTest(APP_UI_BTN_1_LONG);
+    }
+
+    if ( am_devices_button_released(am_bsp_psButtons[1]) )
+    {
+        am_util_debug_printf("Got Button 3 Press\n");
+        AppUiBtnTest(APP_UI_BTN_1_SHORT);
+
+    }
+
+    if ( am_devices_button_released(am_bsp_psButtons[2]) )
+    {
+        am_util_debug_printf("Got Button 4 Press\n");
+        AppUiBtnTest(APP_UI_BTN_2_SHORT);
+    }
+}
+
+//*****************************************************************************
+//
+// Sets up a button interface.
+//
+//*****************************************************************************
+void
+setup_buttons(void)
+{
+    //
+    // Enable the buttons for user interaction.
+    //
+    am_devices_button_array_init(am_bsp_psButtons, AM_BSP_NUM_BUTTONS);
+
+    //
+    // Start a timer.
+    //
+    g_ButtonTimer.handlerId = g_ButtonHandlerId;
+    WsfTimerStartSec(&g_ButtonTimer, 2);
+}
 
 
 
@@ -219,11 +288,14 @@ exactle_stack_init(void)
     handlerId = WsfOsSetNextHandler(HciDrvHandler);
     HciDrvHandlerInit(handlerId);
 
-    handlerId = WsfOsSetNextHandler(HidAppHandler);
-    HidAppHandlerInit(handlerId);
+    //handlerId = WsfOsSetNextHandler(HidAppHandler);
+    //HidAppHandlerInit(handlerId);
 
     handlerId = WsfOsSetNextHandler(BareboneHandler);
     BareboneInit(handlerId);
+		
+    g_ButtonHandlerId = WsfOsSetNextHandler(button_handler);
+    
 }
 
 //*****************************************************************************
@@ -300,7 +372,11 @@ RadioTask(void *pvParameters)
     //     uint8_t bd_addr[6] = {0x11, 0x22, 0x33, 0x44, 0x55, 0x66};
     //     HciVscSetCustom_BDAddr(&bd_addr);
     // }
-
+    
+    //
+    // Prep the buttons for use
+    //
+    setup_buttons();
 
     //
     // Start the barebone application.
