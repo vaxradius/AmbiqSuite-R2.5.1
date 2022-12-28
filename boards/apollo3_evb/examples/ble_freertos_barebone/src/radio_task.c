@@ -91,6 +91,8 @@
 //
 //*****************************************************************************
 #include "barebone_api.h"
+#include "hid_api.h"
+#include "./hidapp/hidapp_api.h"
 
 //*****************************************************************************
 //
@@ -121,15 +123,15 @@ void exactle_stack_init(void);
 // extra AMOTA_PACKET_SIZE bytes for OTA handling
 static uint32_t g_pui32BufMem[
         (WSF_BUF_POOLS*16
-         + 16*8 + 32*4 + 64*6 + 280*6) / sizeof(uint32_t)];
+         + 16*30 + 32*30 + 64*30 + 280*30) / sizeof(uint32_t)];
 
 // Default pool descriptor.
 static wsfBufPoolDesc_t g_psPoolDescriptors[WSF_BUF_POOLS] =
 {
-    {  16,  8 },
-    {  32,  4 },
-    {  64,  6 },
-    { 280,  6 }
+    {  16,  30 },
+    {  32,  30 },
+    {  64,  30 },
+    { 280,  30 }
 };
 
 //*****************************************************************************
@@ -216,6 +218,9 @@ exactle_stack_init(void)
 
     handlerId = WsfOsSetNextHandler(HciDrvHandler);
     HciDrvHandlerInit(handlerId);
+
+    handlerId = WsfOsSetNextHandler(HidAppHandler);
+    HidAppHandlerInit(handlerId);
 
     handlerId = WsfOsSetNextHandler(BareboneHandler);
     BareboneInit(handlerId);

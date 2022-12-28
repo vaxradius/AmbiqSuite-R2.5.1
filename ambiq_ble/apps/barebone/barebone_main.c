@@ -47,9 +47,10 @@
 //*****************************************************************************
 
 #define TUTORIAL_ADDING_DIS
-#define TUTORIAL_ADDING_BAS
+//#define TUTORIAL_ADDING_BAS
 #define TUTORIAL_ADDING_CUSTS
 #define TUTORIAL_ADDING_AMOTAS
+#define TUTORIAL_ADDING_HID
 
 #include <string.h>
 #include "wsf_types.h"
@@ -82,6 +83,15 @@
 #ifdef TUTORIAL_ADDING_AMOTAS
 #include "svc_amotas.h"
 #include "amotas_api.h"
+#endif
+
+#ifdef TUTORIAL_ADDING_HID
+#include "svc_batt.h"
+#include "bas_api.h"
+#include "svc_hid.h"
+#include "hid_api.h"
+#include "./hidapp/hidapp_api.h"
+#include "gatt_api.h"
 #endif
 
 #include "am_bsp.h"
@@ -253,6 +263,14 @@ enum
     /*! AMOTA service, tx characteristic */
     BAREBONE_AMOTAS_TX_CCC_IDX,
 #endif
+#ifdef TUTORIAL_ADDING_HID
+    HIDAPP_MBI_CCC_HDL,                   /*! HID Boot Mouse Input characteristic */
+    HIDAPP_KBI_CCC_HDL,                   /*! HID Boot Keyboard Input characteristic */
+    HIDAPP_IN_REMOTE_CCC_HDL,             /*! HID Input Report characteristic for remote inputs */
+    HIDAPP_IN_KEYBOARD_CCC_HDL,           /*! HID Input Report characteristic for keyboard inputs */
+    HIDAPP_IN_MOUSE_CCC_HDL,              /*! HID Input Report characteristic for mouse inputs */
+    HIDAPP_BATT_LVL_CCC_IDX,              /*! Battery service, battery level characteristic */
+#endif
     BAREBONE_NUM_CCC_IDX
 };
 
@@ -268,6 +286,14 @@ static const attsCccSet_t BareboneCccSet[BAREBONE_NUM_CCC_IDX] =
 #endif
 #ifdef TUTORIAL_ADDING_AMOTAS
     {AMOTAS_TX_CH_CCC_HDL,              ATT_CLIENT_CFG_NOTIFY,      DM_SEC_LEVEL_NONE},
+#endif
+#ifdef TUTORIAL_ADDING_HID
+  {HID_MOUSE_BOOT_IN_CH_CCC_HDL,        ATT_CLIENT_CFG_NOTIFY,    DM_SEC_LEVEL_NONE},    /* HIDAPP_MBI_CCC_HDL */
+  {HID_KEYBOARD_BOOT_IN_CH_CCC_HDL,     ATT_CLIENT_CFG_NOTIFY,    DM_SEC_LEVEL_NONE},    /* HIDAPP_KBI_CCC_HDL */
+  {HID_INPUT_REPORT_1_CH_CCC_HDL,       ATT_CLIENT_CFG_NOTIFY,    DM_SEC_LEVEL_NONE},    /* HIDAPP_IN_REMOTE_CCC_HDL */
+  {HID_INPUT_REPORT_2_CH_CCC_HDL,       ATT_CLIENT_CFG_NOTIFY,    DM_SEC_LEVEL_NONE},    /* HIDAPP_IN_KEYBOARD_CCC_HDL */
+  {HID_INPUT_REPORT_3_CH_CCC_HDL,       ATT_CLIENT_CFG_NOTIFY,    DM_SEC_LEVEL_NONE},    /* HIDAPP_IN_MOUSE_CCC_HDL */
+  {BATT_LVL_CH_CCC_HDL,                 ATT_CLIENT_CFG_NOTIFY,    DM_SEC_LEVEL_NONE}     /* HIDAPP_BATT_LVL_CCC_IDX */
 #endif
 };
 
@@ -520,6 +546,9 @@ static void BareboneProcMsg(wsfMsgHdr_t *pMsg)
 {
     uint8_t uiEvent = APP_UI_NONE;
 
+	hidAppProcMsg((dmEvt_t *)pMsg);
+	return;
+
     switch (pMsg->event)
     {
         case ATTS_HANDLE_VALUE_CNF:
@@ -527,6 +556,7 @@ static void BareboneProcMsg(wsfMsgHdr_t *pMsg)
             BasProcMsg(pMsg);
 #endif
 #ifdef TUTORIAL_ADDING_CUSTS
+	hidAppProcMsg((dmEvt_t *)pMsg);
 #endif
         break;
 
@@ -571,6 +601,7 @@ static void BareboneProcMsg(wsfMsgHdr_t *pMsg)
             BasProcMsg(pMsg);
 #endif
 #ifdef TUTORIAL_ADDING_CUSTS
+		hidAppProcMsg((dmEvt_t *)pMsg);
 #endif
 #ifdef TUTORIAL_ADDING_AMOTAS
             amotas_proc_msg(pMsg);
@@ -587,6 +618,7 @@ static void BareboneProcMsg(wsfMsgHdr_t *pMsg)
             BasMeasBattStop((dmConnId_t) pMsg->param);
 #endif
 #ifdef TUTORIAL_ADDING_CUSTS
+		hidAppProcMsg((dmEvt_t *)pMsg);
 #endif
 #ifdef TUTORIAL_ADDING_AMOTAS
             amotas_conn_close((dmConnId_t) pMsg->param);
@@ -642,6 +674,7 @@ static void BareboneProcMsg(wsfMsgHdr_t *pMsg)
         break;
 #endif
 #ifdef TUTORIAL_ADDING_CUSTS
+		hidAppProcMsg((dmEvt_t *)pMsg);
 #endif
 #ifdef TUTORIAL_ADDING_AMOTAS
         case BAREBONE_AMOTA_RESET_TIMER_IND:
@@ -700,6 +733,10 @@ void BareboneInit(wsfHandlerId_t handlerId)
     amotas_init(handlerId, (AmotasCfg_t *) &s_sAmotasCfg);
 #endif
 
+#ifdef TUTORIAL_ADDING_HID
+
+#endif
+
 }
 
 /*************************************************************************************************/
@@ -753,9 +790,14 @@ void BareboneStart(void)
     AttsCccRegister(BAREBONE_NUM_CCC_IDX, (attsCccSet_t *) BareboneCccSet, BareboneCccCback);
 
     /* Register for app framework callbacks */
-    AppUiBtnRegister(BareboneBtnCback);
+    //AppUiBtnRegister(BareboneBtnCback);
+    AppUiBtnRegister(hidAppBtnCback);
+
 
     /* Initialize attribute server database */
+#ifdef TUTORIAL_ADDING_HID
+    SvcCoreGattCbackRegister(GattReadCback, GattWriteCback);
+#endif
     SvcCoreAddGroup();
 
 #ifdef TUTORIAL_ADDING_DIS
@@ -773,6 +815,25 @@ void BareboneStart(void)
 #ifdef TUTORIAL_ADDING_AMOTAS
     SvcAmotasCbackRegister(NULL, amotas_write_cback);
     SvcAmotasAddGroup();
+#endif
+
+#ifdef TUTORIAL_ADDING_HID
+  /* Add the HID service statically */
+  SvcHidAddGroup();
+  SvcHidRegister(HidAttsWriteCback, NULL);
+
+  /* Add the Battery service statically */
+  SvcBattAddGroup();
+  SvcBattCbackRegister(BasReadCback, NULL);
+
+  /* Set Service Changed CCCD index. */
+  GattSetSvcChangedIdx(BAREBONE_GATT_SC_CCC_IDX);
+
+  /* Initialize the HID profile */
+  HidInit(&hidAppHidConfig);
+
+  /* Initialize the report attributes */
+  hidAppReportInit();
 #endif
     /* Reset the device */
     DmDevReset();

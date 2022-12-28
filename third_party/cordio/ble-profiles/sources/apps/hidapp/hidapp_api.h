@@ -28,6 +28,12 @@
 extern "C" {
 #endif
 
+extern const hidConfig_t hidAppHidConfig;
+
+void hidAppBtnCback(uint8_t btn);
+void hidAppProcMsg(dmEvt_t *pMsg);
+void HidAppHandler(wsfEventMask_t event, wsfMsgHdr_t *pMsg);
+
 /**************************************************************************************************
   Function Declarations
 **************************************************************************************************/

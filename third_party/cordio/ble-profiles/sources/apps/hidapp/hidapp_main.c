@@ -377,7 +377,7 @@ static void hidAppFeatureCback(dmConnId_t connId, uint8_t id, uint16_t len, uint
 static void hidAppInfoCback(dmConnId_t connId, uint8_t type, uint8_t value);
 
 /*! HID Profile Configuration */
-static const hidConfig_t hidAppHidConfig =
+const hidConfig_t hidAppHidConfig =
 {
   (hidReportIdMap_t*) hidAppReportIdSet,                  /* Report ID to Attribute Handle map */
   sizeof(hidAppReportIdSet)/sizeof(hidReportIdMap_t),     /* Size of Report ID to Attribute Handle map */
@@ -960,7 +960,7 @@ static void hidAppTestNoButton(void)
  *  \return None.
  */
 /*************************************************************************************************/
-static void hidAppBtnCback(uint8_t btn)
+void hidAppBtnCback(uint8_t btn)
 {
   dmConnId_t connId = AppConnIsOpen();
 
@@ -1034,7 +1034,7 @@ static void hidAppBtnCback(uint8_t btn)
  *  \return None.
  */
 /*************************************************************************************************/
-static void hidAppProcMsg(dmEvt_t *pMsg)
+void hidAppProcMsg(dmEvt_t *pMsg)
 {
   uint8_t uiEvent = APP_UI_NONE;
 
@@ -1213,7 +1213,7 @@ static void hidAppInfoCback(dmConnId_t connId, uint8_t type, uint8_t value)
  *  \return None.
  */
 /*************************************************************************************************/
-static void hidAppReportInit(void)
+void hidAppReportInit(void)
 {
   uint8_t iKeyboardBuffer[HIDAPP_KEYBOARD_INPUT_REPORT_LEN];
   uint8_t iMouseBuffer[HIDAPP_MOUSE_INPUT_REPORT_LEN];
