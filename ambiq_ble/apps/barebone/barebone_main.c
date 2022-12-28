@@ -154,11 +154,11 @@ static const appSlaveCfg_t AppSlaveCfg =
 /*! configurable parameters for security */
 static const appSecCfg_t AppSecCfg =
 {
-    0,                                      /*! Authentication and bonding flags */
-    0,                                      /*! Initiator key distribution flags */
-    DM_KEY_DIST_LTK,                        /*! Responder key distribution flags */
-    FALSE,                                  /*! TRUE if Out-of-band pairing data is present */
-    FALSE                                   /*! TRUE to initiate security upon connection */
+  DM_AUTH_BOND_FLAG | DM_AUTH_SC_FLAG,    /*! Authentication and bonding flags */
+  0,                                      /*! Initiator key distribution flags */
+  DM_KEY_DIST_LTK,                        /*! Responder key distribution flags */
+  FALSE,                                  /*! TRUE if Out-of-band pairing data is present */
+  TRUE                                    /*! TRUE to initiate security upon connection */
 };
 
 /*! configurable parameters for connection parameter update */
