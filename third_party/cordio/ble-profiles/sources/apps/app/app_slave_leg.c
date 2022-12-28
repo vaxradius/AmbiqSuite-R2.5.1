@@ -151,6 +151,7 @@ static void appSlaveLegAdvStop(dmEvt_t *pMsg)
 static void appSlaveLegAdvRestart(dmEvt_t *pMsg)
 {
   /* if connection closed */
+#if 1  
   if (pMsg->hdr.event == DM_CONN_CLOSE_IND)
   {
     /* if connectable directed advertising failed to establish connection or was cancelled */
@@ -160,6 +161,19 @@ static void appSlaveLegAdvRestart(dmEvt_t *pMsg)
       return;
     }
   }
+#else
+  /*Adv won't Restart if connection closed*/
+  if (pMsg->hdr.event == DM_CONN_CLOSE_IND)
+  {
+    /* if connectable directed advertising failed to establish connection or was cancelled */
+    if (appSlaveCb.advDirected)
+    {
+      appSlaveCb.advDirected = FALSE;
+      //return;
+    }
+    return;
+  }
+#endif
   /* else if connection opened */
   else if (pMsg->hdr.event == DM_CONN_OPEN_IND)
   {
