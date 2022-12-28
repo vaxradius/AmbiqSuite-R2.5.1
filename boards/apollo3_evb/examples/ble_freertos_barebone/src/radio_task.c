@@ -113,7 +113,7 @@ void exactle_stack_init(void);
 // WSF buffer pools.
 //
 //*****************************************************************************
-#define WSF_BUF_POOLS               4
+#define WSF_BUF_POOLS               5
 
 // Important note: the size of g_pui32BufMem should includes both overhead of internal
 // buffer management structure, wsfBufPool_t (up to 16 bytes for each pool), and pool
@@ -123,7 +123,7 @@ void exactle_stack_init(void);
 // extra AMOTA_PACKET_SIZE bytes for OTA handling
 static uint32_t g_pui32BufMem[
         (WSF_BUF_POOLS*16
-         + 16*30 + 32*30 + 64*30 + 280*30) / sizeof(uint32_t)];
+         + 16*30 + 32*30 + 64*30 + 280*30+512*2) / sizeof(uint32_t)];
 
 // Default pool descriptor.
 static wsfBufPoolDesc_t g_psPoolDescriptors[WSF_BUF_POOLS] =
@@ -131,7 +131,8 @@ static wsfBufPoolDesc_t g_psPoolDescriptors[WSF_BUF_POOLS] =
     {  16,  30 },
     {  32,  30 },
     {  64,  30 },
-    { 280,  30 }
+    { 280,  30 },
+    { 512,  2 }
 };
 
 //*****************************************************************************
